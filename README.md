@@ -92,7 +92,7 @@ async with Node(card=card) as node:
 
 ```bash
 # On any VPS or cloud instance with a public IP:
-git clone https://github.com/agentanycast/agentanycast-relay && cd agentanycast-relay
+git clone https://github.com/AgentAnycast/agentanycast-relay && cd agentanycast-relay
 docker-compose up -d
 
 # Note the relay's multiaddr from the logs:
@@ -136,7 +136,7 @@ export AGENTANYCAST_BOOTSTRAP_PEERS="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW..."
 ## Requirements
 
 - Python 3.10+
-- The [agentanycastd](https://github.com/agentanycast/agentanycast-node) daemon (auto-managed by the SDK, or bring your own)
+- The [agentanycastd](https://github.com/AgentAnycast/agentanycast-node) daemon (auto-managed by the SDK, or bring your own)
 
 ## License
 
