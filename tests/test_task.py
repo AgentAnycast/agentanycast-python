@@ -92,6 +92,7 @@ async def test_task_handle_wait_timeout():
     handle = TaskHandle(task=task, cancel_fn=noop)
 
     from agentanycast.exceptions import TaskTimeoutError
+
     with pytest.raises(TaskTimeoutError):
         await handle.wait(timeout=0.1)
 

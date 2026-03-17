@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import atexit
-import hashlib
 import logging
 import os
 import platform
 import shutil
-import signal
 import subprocess
-import tempfile
 from pathlib import Path
 
 import httpx
@@ -44,8 +41,7 @@ def _detect_platform() -> tuple[str, str]:
     key = (system, machine)
     if key not in _PLATFORM_MAP:
         raise DaemonNotFoundError(
-            f"Unsupported platform: {system}/{machine}. "
-            f"Supported: {list(_PLATFORM_MAP.keys())}"
+            f"Unsupported platform: {system}/{machine}. Supported: {list(_PLATFORM_MAP.keys())}"
         )
     return _PLATFORM_MAP[key]
 
@@ -113,18 +109,14 @@ class DaemonManager:
             return default_bin
 
         raise DaemonNotFoundError(
-            "agentanycastd binary not found. "
-            "Install it or set daemon_bin parameter."
+            "agentanycastd binary not found. Install it or set daemon_bin parameter."
         )
 
     async def download_binary(self) -> Path:
         """Download the daemon binary for the current platform."""
         os_name, arch = _detect_platform()
         suffix = ".exe" if os_name == "windows" else ""
-        filename = f"agentanycastd-{os_name}-{arch}{suffix}"
-        url = _RELEASE_URL.format(
-            version=self._daemon_version, os=os_name, arch=arch
-        )
+        url = _RELEASE_URL.format(version=self._daemon_version, os=os_name, arch=arch)
 
         dest = self._bin_dir / f"agentanycastd{suffix}"
         self._bin_dir.mkdir(parents=True, exist_ok=True)
@@ -141,9 +133,11 @@ class DaemonManager:
                     f"Daemon binary not found at {url} (HTTP 404). "
                     f"Pre-built binaries may not be available yet. "
                     f"You can either:\n"
-                    f"  1. Build the daemon locally from https://github.com/agentanycast/agentanycast-node "
+                    f"  1. Build the daemon locally from "
+                    f"https://github.com/agentanycast/agentanycast-node "
                     f"and pass daemon_path= to Node()\n"
-                    f"  2. Place the built 'agentanycastd' binary on your PATH or in {self._bin_dir}"
+                    f"  2. Place the built 'agentanycastd' binary on "
+                    f"your PATH or in {self._bin_dir}"
                 ) from e
             raise DaemonNotFoundError(
                 f"Failed to download daemon binary from {url}: HTTP {e.response.status_code}"

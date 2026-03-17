@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import grpc
 
@@ -119,9 +119,7 @@ class GrpcClient:
         """Get the agent card of a connected peer."""
         stub = self._ensure_connected()
         try:
-            resp = await stub.GetPeerCard(
-                node_service_pb2.GetPeerCardRequest(peer_id=peer_id)
-            )
+            resp = await stub.GetPeerCard(node_service_pb2.GetPeerCardRequest(peer_id=peer_id))
             return resp.card
         except grpc.aio.AioRpcError as e:
             if e.code() == grpc.StatusCode.NOT_FOUND:
@@ -160,9 +158,7 @@ class GrpcClient:
         """Get the current state of a task."""
         stub = self._ensure_connected()
         try:
-            resp = await stub.GetTask(
-                node_service_pb2.GetTaskRequest(task_id=task_id)
-            )
+            resp = await stub.GetTask(node_service_pb2.GetTaskRequest(task_id=task_id))
             return resp.task
         except grpc.aio.AioRpcError as e:
             if e.code() == grpc.StatusCode.NOT_FOUND:
@@ -173,9 +169,7 @@ class GrpcClient:
         """Cancel a task."""
         stub = self._ensure_connected()
         try:
-            resp = await stub.CancelTask(
-                node_service_pb2.CancelTaskRequest(task_id=task_id)
-            )
+            resp = await stub.CancelTask(node_service_pb2.CancelTaskRequest(task_id=task_id))
             return resp.task
         except grpc.aio.AioRpcError as e:
             if e.code() == grpc.StatusCode.NOT_FOUND:
@@ -184,7 +178,7 @@ class GrpcClient:
 
     async def subscribe_task_updates(
         self, task_id: str
-    ) -> AsyncIterator[node_service_pb2.TaskUpdateEvent]:
+    ) -> AsyncIterator[node_service_pb2.SubscribeTaskUpdatesResponse]:
         """Stream status updates for a specific task."""
         stub = self._ensure_connected()
         async for event in stub.SubscribeTaskUpdates(
@@ -196,7 +190,7 @@ class GrpcClient:
 
     async def subscribe_incoming_tasks(
         self,
-    ) -> AsyncIterator[node_service_pb2.IncomingTaskEvent]:
+    ) -> AsyncIterator[node_service_pb2.SubscribeIncomingTasksResponse]:
         """Stream new incoming task requests from remote agents."""
         stub = self._ensure_connected()
         async for event in stub.SubscribeIncomingTasks(

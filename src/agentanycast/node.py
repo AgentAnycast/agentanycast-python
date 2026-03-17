@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable, Coroutine
 from pathlib import Path
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from agentanycast._generated.agentanycast.v1 import (
     a2a_models_pb2,
@@ -14,10 +15,6 @@ from agentanycast._generated.agentanycast.v1 import (
 from agentanycast._grpc_client import GrpcClient
 from agentanycast.card import AgentCard
 from agentanycast.daemon import DaemonManager
-from agentanycast.exceptions import (
-    CardNotAvailableError,
-    PeerNotFoundError,
-)
 from agentanycast.task import (
     Artifact,
     IncomingTask,
@@ -489,9 +486,7 @@ class Node:
                         assert grpc_ref is not None
                         if status == TaskStatus.COMPLETED:
                             pb_artifacts = (
-                                [_artifact_to_proto(a) for a in artifacts]
-                                if artifacts
-                                else []
+                                [_artifact_to_proto(a) for a in artifacts] if artifacts else []
                             )
                             await grpc_ref.complete_task(task_id, pb_artifacts)
                         elif status == TaskStatus.FAILED:

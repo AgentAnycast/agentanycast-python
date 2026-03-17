@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import enum
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 
 class TaskStatus(enum.Enum):
@@ -221,7 +222,10 @@ class IncomingTask:
         self,
         task: Task,
         sender_card: Any | None,
-        update_fn: Callable[[str, TaskStatus, list[Artifact] | None, str | None], Coroutine[Any, Any, None]],
+        update_fn: Callable[
+            [str, TaskStatus, list[Artifact] | None, str | None],
+            Coroutine[Any, Any, None],
+        ],
     ) -> None:
         self._task = task
         self.sender_card = sender_card
@@ -248,7 +252,10 @@ class IncomingTask:
         ts = TaskStatus(status)
         await self._update_fn(self.task_id, ts, None, None)
 
-    async def complete(self, artifacts: list[dict[str, Any]] | list[Artifact] | None = None) -> None:
+    async def complete(
+        self,
+        artifacts: list[dict[str, Any]] | list[Artifact] | None = None,
+    ) -> None:
         """Mark the task as completed with optional artifacts."""
         parsed: list[Artifact] = []
         if artifacts:

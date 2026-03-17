@@ -26,11 +26,9 @@ Run in two terminals:
 
 import argparse
 import asyncio
-import sys
 from pathlib import Path
 
 from agentanycast import AgentCard, Node, Skill
-
 
 # ── Resolve the daemon binary path ──────────────────────────
 # Look for the binary in the sibling agentanycast-node directory,
@@ -74,16 +72,14 @@ async def run_server():
                         break
 
             print(f"  ← Received task from {task.peer_id[:16]}...")
-            print(f"    Message: \"{text}\"")
+            print(f'    Message: "{text}"')
 
             # Process and respond
             await task.update_status("working")
             response = f"Echo: {text}"
-            await task.complete(
-                artifacts=[{"name": "echo_result", "parts": [{"text": response}]}]
-            )
-            print(f"    Response: \"{response}\"")
-            print(f"  ✓ Task completed.\n")
+            await task.complete(artifacts=[{"name": "echo_result", "parts": [{"text": response}]}])
+            print(f'    Response: "{response}"')
+            print("  Task completed.\n")
 
         await node.serve_forever()
 
@@ -111,12 +107,12 @@ async def run_client(peer_id: str):
             print(f"  Skills:       {[s.id for s in remote_card.skills]}")
             print()
         except Exception:
-            print(f"  (Could not fetch remote card — sending task anyway)")
+            print("  (Could not fetch remote card -- sending task anyway)")
             print()
 
         # Send a task
         message_text = "Hello from AgentAnycast!"
-        print(f"  → Sending: \"{message_text}\"")
+        print(f'  → Sending: "{message_text}"')
 
         task = await node.send_task(
             peer_id=peer_id,
@@ -127,7 +123,7 @@ async def run_client(peer_id: str):
         )
 
         print(f"    Task ID: {task.task_id}")
-        print(f"    Waiting for response...")
+        print("    Waiting for response...")
 
         # Wait for the result
         result = await task.wait(timeout=30)
@@ -136,7 +132,7 @@ async def run_client(peer_id: str):
         for artifact in result.artifacts:
             for part in artifact.parts:
                 if part.text:
-                    print(f"  ← Response: \"{part.text}\"")
+                    print(f'  ← Response: "{part.text}"')
 
         print()
         print("  ✓ Round-trip complete!")

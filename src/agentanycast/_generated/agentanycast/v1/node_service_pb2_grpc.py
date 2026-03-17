@@ -59,12 +59,12 @@ class NodeServiceStub(object):
         self.SubscribeTaskUpdates = channel.unary_stream(
                 '/agentanycast.v1.NodeService/SubscribeTaskUpdates',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesRequest.SerializeToString,
-                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.TaskUpdateEvent.FromString,
+                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesResponse.FromString,
                 )
         self.SubscribeIncomingTasks = channel.unary_stream(
                 '/agentanycast.v1.NodeService/SubscribeIncomingTasks',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksRequest.SerializeToString,
-                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.IncomingTaskEvent.FromString,
+                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksResponse.FromString,
                 )
         self.UpdateTaskStatus = channel.unary_unary(
                 '/agentanycast.v1.NodeService/UpdateTaskStatus',
@@ -234,12 +234,12 @@ def add_NodeServiceServicer_to_server(servicer, server):
             'SubscribeTaskUpdates': grpc.unary_stream_rpc_method_handler(
                     servicer.SubscribeTaskUpdates,
                     request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesRequest.FromString,
-                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.TaskUpdateEvent.SerializeToString,
+                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesResponse.SerializeToString,
             ),
             'SubscribeIncomingTasks': grpc.unary_stream_rpc_method_handler(
                     servicer.SubscribeIncomingTasks,
                     request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksRequest.FromString,
-                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.IncomingTaskEvent.SerializeToString,
+                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksResponse.SerializeToString,
             ),
             'UpdateTaskStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateTaskStatus,
@@ -417,7 +417,7 @@ class NodeService(object):
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/agentanycast.v1.NodeService/SubscribeTaskUpdates',
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesRequest.SerializeToString,
-            agentanycast_dot_v1_dot_node__service__pb2.TaskUpdateEvent.FromString,
+            agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -434,7 +434,7 @@ class NodeService(object):
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/agentanycast.v1.NodeService/SubscribeIncomingTasks',
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksRequest.SerializeToString,
-            agentanycast_dot_v1_dot_node__service__pb2.IncomingTaskEvent.FromString,
+            agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
