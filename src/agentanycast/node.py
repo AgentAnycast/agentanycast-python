@@ -235,11 +235,13 @@ class Node:
         daemon_addr: str | None = None,
         daemon_bin: str | Path | None = None,
         daemon_path: str | Path | None = None,
+        home: str | Path | None = None,
     ) -> None:
         self._card = card
         self._relay = relay
         self._key_path = key_path
         self._daemon_addr = daemon_addr
+        self._home = home
         # daemon_path takes precedence over daemon_bin for user convenience
         self._daemon_bin = daemon_path or daemon_bin
 
@@ -277,6 +279,7 @@ class Node:
                 daemon_bin=self._daemon_bin,
                 key_path=self._key_path,
                 relay=self._relay,
+                home=self._home,
             )
             await self._daemon.start()
             self._daemon_addr = self._daemon.grpc_address

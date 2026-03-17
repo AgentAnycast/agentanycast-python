@@ -35,9 +35,6 @@ _PLATFORM_MAP = {
 }
 
 _DEFAULT_BASE = Path.home() / ".agentanycast"
-_DEFAULT_BIN_DIR = _DEFAULT_BASE / "bin"
-_DEFAULT_LOG_DIR = _DEFAULT_BASE / "logs"
-_DEFAULT_SOCK = _DEFAULT_BASE / "daemon.sock"
 
 
 def _detect_platform() -> tuple[str, str]:
@@ -71,13 +68,20 @@ class DaemonManager:
         grpc_listen: str | None = None,
         relay: str | None = None,
         log_level: str = "info",
+        home: str | Path | None = None,
     ) -> None:
+        # Resolve base directory — allows multiple instances with isolated state.
+        self._base = Path(home) if home else _DEFAULT_BASE
+        self._bin_dir = self._base / "bin"
+        self._log_dir = self._base / "logs"
+
         self._daemon_bin = Path(daemon_bin) if daemon_bin else None
         self._daemon_version = daemon_version
-        self._key_path = str(key_path) if key_path else str(_DEFAULT_BASE / "key")
-        self._grpc_listen = grpc_listen or f"unix://{_DEFAULT_SOCK}"
+        self._key_path = str(key_path) if key_path else str(self._base / "key")
+        self._grpc_listen = grpc_listen or f"unix://{self._base / 'daemon.sock'}"
         self._relay = relay
         self._log_level = log_level
+        self._store_path = str(self._base / "data")
         self._process: subprocess.Popen[bytes] | None = None
         self._managed = False  # True if we started the daemon
 
@@ -91,7 +95,7 @@ class DaemonManager:
         """The UDS path (if using unix://)."""
         if self._grpc_listen.startswith("unix://"):
             return Path(self._grpc_listen[7:])
-        return _DEFAULT_SOCK
+        return self._base / "daemon.sock"
 
     def _find_binary(self) -> Path:
         """Find the daemon binary, checking explicit path, PATH, and default location."""
@@ -104,7 +108,7 @@ class DaemonManager:
             return Path(found)
 
         # Check default install location
-        default_bin = _DEFAULT_BIN_DIR / "agentanycastd"
+        default_bin = self._bin_dir / "agentanycastd"
         if default_bin.exists():
             return default_bin
 
@@ -122,8 +126,8 @@ class DaemonManager:
             version=self._daemon_version, os=os_name, arch=arch
         )
 
-        dest = _DEFAULT_BIN_DIR / f"agentanycastd{suffix}"
-        _DEFAULT_BIN_DIR.mkdir(parents=True, exist_ok=True)
+        dest = self._bin_dir / f"agentanycastd{suffix}"
+        self._bin_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("Downloading daemon binary from %s", url)
         try:
@@ -139,7 +143,7 @@ class DaemonManager:
                     f"You can either:\n"
                     f"  1. Build the daemon locally from https://github.com/agentanycast/agentanycast-node "
                     f"and pass daemon_path= to Node()\n"
-                    f"  2. Place the built 'agentanycastd' binary on your PATH or in {_DEFAULT_BIN_DIR}"
+                    f"  2. Place the built 'agentanycastd' binary on your PATH or in {self._bin_dir}"
                 ) from e
             raise DaemonNotFoundError(
                 f"Failed to download daemon binary from {url}: HTTP {e.response.status_code}"
@@ -170,8 +174,8 @@ class DaemonManager:
         binary = await self.ensure_binary()
 
         # Prepare log directory
-        _DEFAULT_LOG_DIR.mkdir(parents=True, exist_ok=True)
-        log_file = _DEFAULT_LOG_DIR / "daemon.log"
+        self._log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = self._log_dir / "daemon.log"
 
         # Build command
         cmd = [
@@ -186,11 +190,14 @@ class DaemonManager:
 
         logger.info("Starting daemon: %s", " ".join(cmd))
 
+        env = {**os.environ, "AGENTANYCAST_STORE_PATH": self._store_path}
+
         with open(log_file, "a") as lf:
             self._process = subprocess.Popen(
                 cmd,
                 stdout=lf,
                 stderr=lf,
+                env=env,
                 start_new_session=True,
             )
 
@@ -209,7 +216,7 @@ class DaemonManager:
             if self._process and self._process.poll() is not None:
                 raise DaemonStartError(
                     f"Daemon exited with code {self._process.returncode}. "
-                    f"Check logs at {_DEFAULT_LOG_DIR / 'daemon.log'}"
+                    f"Check logs at {self._log_dir / 'daemon.log'}"
                 )
             if self.sock_path.exists():
                 logger.info("Daemon ready at %s", self._grpc_listen)
@@ -218,7 +225,7 @@ class DaemonManager:
 
         raise DaemonConnectionError(
             f"Daemon did not become ready within {timeout}s. "
-            f"Check logs at {_DEFAULT_LOG_DIR / 'daemon.log'}"
+            f"Check logs at {self._log_dir / 'daemon.log'}"
         )
 
     def stop_sync(self) -> None:
