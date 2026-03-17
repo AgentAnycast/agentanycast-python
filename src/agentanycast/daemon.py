@@ -1,0 +1,240 @@
+"""Daemon lifecycle management — download, start, health check, stop."""
+
+from __future__ import annotations
+
+import asyncio
+import atexit
+import hashlib
+import logging
+import os
+import platform
+import shutil
+import signal
+import subprocess
+import tempfile
+from pathlib import Path
+
+import httpx
+
+from agentanycast.exceptions import DaemonConnectionError, DaemonNotFoundError, DaemonStartError
+
+logger = logging.getLogger(__name__)
+
+# GitHub release URL pattern
+_RELEASE_URL = (
+    "https://github.com/agentanycast/agentanycast-node/releases/download/"
+    "v{version}/agentanycastd-{os}-{arch}"
+)
+
+_PLATFORM_MAP = {
+    ("Darwin", "arm64"): ("darwin", "arm64"),
+    ("Darwin", "x86_64"): ("darwin", "amd64"),
+    ("Linux", "x86_64"): ("linux", "amd64"),
+    ("Linux", "aarch64"): ("linux", "arm64"),
+    ("Windows", "AMD64"): ("windows", "amd64"),
+}
+
+_DEFAULT_BASE = Path.home() / ".agentanycast"
+_DEFAULT_BIN_DIR = _DEFAULT_BASE / "bin"
+_DEFAULT_LOG_DIR = _DEFAULT_BASE / "logs"
+_DEFAULT_SOCK = _DEFAULT_BASE / "daemon.sock"
+
+
+def _detect_platform() -> tuple[str, str]:
+    """Detect OS and architecture, mapped to Go naming conventions."""
+    system = platform.system()
+    machine = platform.machine()
+    key = (system, machine)
+    if key not in _PLATFORM_MAP:
+        raise DaemonNotFoundError(
+            f"Unsupported platform: {system}/{machine}. "
+            f"Supported: {list(_PLATFORM_MAP.keys())}"
+        )
+    return _PLATFORM_MAP[key]
+
+
+class DaemonManager:
+    """Manages the agentanycastd daemon process lifecycle.
+
+    Responsibilities:
+    - Locate or download the daemon binary
+    - Start the daemon subprocess
+    - Health check via gRPC
+    - Stop daemon on exit
+    """
+
+    def __init__(
+        self,
+        daemon_bin: str | Path | None = None,
+        daemon_version: str = "0.1.0",
+        key_path: str | Path | None = None,
+        grpc_listen: str | None = None,
+        relay: str | None = None,
+        log_level: str = "info",
+    ) -> None:
+        self._daemon_bin = Path(daemon_bin) if daemon_bin else None
+        self._daemon_version = daemon_version
+        self._key_path = str(key_path) if key_path else str(_DEFAULT_BASE / "key")
+        self._grpc_listen = grpc_listen or f"unix://{_DEFAULT_SOCK}"
+        self._relay = relay
+        self._log_level = log_level
+        self._process: subprocess.Popen[bytes] | None = None
+        self._managed = False  # True if we started the daemon
+
+    @property
+    def grpc_address(self) -> str:
+        """The gRPC address the daemon is listening on."""
+        return self._grpc_listen
+
+    @property
+    def sock_path(self) -> Path:
+        """The UDS path (if using unix://)."""
+        if self._grpc_listen.startswith("unix://"):
+            return Path(self._grpc_listen[7:])
+        return _DEFAULT_SOCK
+
+    def _find_binary(self) -> Path:
+        """Find the daemon binary, checking explicit path, PATH, and default location."""
+        if self._daemon_bin and self._daemon_bin.exists():
+            return self._daemon_bin
+
+        # Check PATH
+        found = shutil.which("agentanycastd")
+        if found:
+            return Path(found)
+
+        # Check default install location
+        default_bin = _DEFAULT_BIN_DIR / "agentanycastd"
+        if default_bin.exists():
+            return default_bin
+
+        raise DaemonNotFoundError(
+            "agentanycastd binary not found. "
+            "Install it or set daemon_bin parameter."
+        )
+
+    async def download_binary(self) -> Path:
+        """Download the daemon binary for the current platform."""
+        os_name, arch = _detect_platform()
+        suffix = ".exe" if os_name == "windows" else ""
+        filename = f"agentanycastd-{os_name}-{arch}{suffix}"
+        url = _RELEASE_URL.format(
+            version=self._daemon_version, os=os_name, arch=arch
+        )
+
+        dest = _DEFAULT_BIN_DIR / f"agentanycastd{suffix}"
+        _DEFAULT_BIN_DIR.mkdir(parents=True, exist_ok=True)
+
+        logger.info("Downloading daemon binary from %s", url)
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                dest.write_bytes(resp.content)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise DaemonNotFoundError(
+                    f"Daemon binary not found at {url} (HTTP 404). "
+                    f"Pre-built binaries may not be available yet. "
+                    f"You can either:\n"
+                    f"  1. Build the daemon locally from https://github.com/agentanycast/agentanycast-node "
+                    f"and pass daemon_path= to Node()\n"
+                    f"  2. Place the built 'agentanycastd' binary on your PATH or in {_DEFAULT_BIN_DIR}"
+                ) from e
+            raise DaemonNotFoundError(
+                f"Failed to download daemon binary from {url}: HTTP {e.response.status_code}"
+            ) from e
+
+        dest.chmod(0o755)
+        logger.info("Daemon binary downloaded to %s", dest)
+        return dest
+
+    async def ensure_binary(self) -> Path:
+        """Ensure the daemon binary is available, downloading if needed."""
+        try:
+            return self._find_binary()
+        except DaemonNotFoundError:
+            return await self.download_binary()
+
+    def _is_daemon_running(self) -> bool:
+        """Check if a daemon is already running by testing the UDS."""
+        sock = self.sock_path
+        return sock.exists()
+
+    async def start(self) -> None:
+        """Start the daemon process if not already running."""
+        if self._is_daemon_running():
+            logger.info("Daemon already running at %s", self._grpc_listen)
+            return
+
+        binary = await self.ensure_binary()
+
+        # Prepare log directory
+        _DEFAULT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        log_file = _DEFAULT_LOG_DIR / "daemon.log"
+
+        # Build command
+        cmd = [
+            str(binary),
+            f"--key={self._key_path}",
+            f"--grpc-listen={self._grpc_listen}",
+            f"--log-level={self._log_level}",
+        ]
+
+        if self._relay:
+            cmd.append(f"--bootstrap-peers={self._relay}")
+
+        logger.info("Starting daemon: %s", " ".join(cmd))
+
+        with open(log_file, "a") as lf:
+            self._process = subprocess.Popen(
+                cmd,
+                stdout=lf,
+                stderr=lf,
+                start_new_session=True,
+            )
+
+        self._managed = True
+
+        # Register cleanup
+        atexit.register(self.stop_sync)
+
+        # Wait for daemon to be ready (health check)
+        await self._wait_ready(timeout=10.0)
+
+    async def _wait_ready(self, timeout: float) -> None:
+        """Poll until the daemon's UDS appears and is connectable."""
+        deadline = asyncio.get_event_loop().time() + timeout
+        while asyncio.get_event_loop().time() < deadline:
+            if self._process and self._process.poll() is not None:
+                raise DaemonStartError(
+                    f"Daemon exited with code {self._process.returncode}. "
+                    f"Check logs at {_DEFAULT_LOG_DIR / 'daemon.log'}"
+                )
+            if self.sock_path.exists():
+                logger.info("Daemon ready at %s", self._grpc_listen)
+                return
+            await asyncio.sleep(0.1)
+
+        raise DaemonConnectionError(
+            f"Daemon did not become ready within {timeout}s. "
+            f"Check logs at {_DEFAULT_LOG_DIR / 'daemon.log'}"
+        )
+
+    def stop_sync(self) -> None:
+        """Synchronously stop the daemon (for atexit)."""
+        if self._process and self._managed:
+            try:
+                self._process.terminate()
+                self._process.wait(timeout=5)
+            except Exception:
+                self._process.kill()
+            finally:
+                self._process = None
+                # Clean up stale socket
+                if self.sock_path.exists():
+                    self.sock_path.unlink(missing_ok=True)
+
+    async def stop(self) -> None:
+        """Stop the daemon process."""
+        self.stop_sync()
