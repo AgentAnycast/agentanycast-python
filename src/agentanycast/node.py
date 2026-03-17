@@ -222,7 +222,7 @@ class Node:
     a Pythonic async API for sending/receiving A2A Tasks.
 
     Usage:
-        async with Node(card=my_card, relay="relay.agentanycast.dev") as node:
+        async with Node(card=my_card) as node:
             task = await node.send_task(peer_id, message)
             result = await task.wait()
     """

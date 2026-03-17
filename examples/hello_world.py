@@ -24,7 +24,7 @@ async def run_server():
         skills=[Skill(id="echo", description="Echo the input message back")],
     )
 
-    async with Node(card=card, relay="relay.agentanycast.dev") as node:
+    async with Node(card=card) as node:
         print(f"Server started. Peer ID: {node.peer_id}")
         print("Waiting for incoming tasks...")
 
@@ -51,7 +51,7 @@ async def run_client(peer_id: str):
         skills=[],
     )
 
-    async with Node(card=card, relay="relay.agentanycast.dev") as node:
+    async with Node(card=card) as node:
         print(f"Client started. Peer ID: {node.peer_id}")
 
         # Check what the remote agent can do
