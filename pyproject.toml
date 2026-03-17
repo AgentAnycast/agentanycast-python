@@ -30,6 +30,12 @@ dependencies = [
     "httpx>=0.27",
 ]
 
+[project.urls]
+Homepage = "https://github.com/AgentAnycast/agentanycast"
+Repository = "https://github.com/AgentAnycast/agentanycast-python"
+Issues = "https://github.com/AgentAnycast/agentanycast/issues"
+Changelog = "https://github.com/AgentAnycast/agentanycast-python/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",

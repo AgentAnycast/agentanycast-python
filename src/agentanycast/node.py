@@ -234,6 +234,23 @@ class Node:
         daemon_path: str | Path | None = None,
         home: str | Path | None = None,
     ) -> None:
+        """Initialize the Node.
+
+        Args:
+            card: Your agent's AgentCard describing its identity and skills.
+            relay: Relay server multiaddr for cross-network communication.
+                Set to ``None`` for LAN-only (mDNS) mode.
+            key_path: Path to the libp2p identity key file. Defaults to
+                ``~/.agentanycast/key`` inside *home*.
+            daemon_addr: Connect to an already-running daemon at this gRPC
+                address instead of launching a new one.
+            daemon_bin: Deprecated — use *daemon_path* instead.
+            daemon_path: Path to a local ``agentanycastd`` binary. When
+                ``None``, the SDK downloads a matching release automatically.
+            home: Data directory for daemon state (key, socket, store). Use
+                different values to run multiple nodes on the same machine.
+                Defaults to ``~/.agentanycast``.
+        """
         self._card = card
         self._relay = relay
         self._key_path = key_path
