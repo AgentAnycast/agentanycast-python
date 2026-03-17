@@ -32,9 +32,25 @@ pip install agentanycast
 
 ## Quick Start
 
+### Try the hello world example
+
+```bash
+# Prerequisites: build the daemon first
+cd agentanycast-node && go build -o agentanycastd ./cmd/agentanycastd/
+
+# Install the SDK
+cd agentanycast-python && pip install -e .
+
+# Terminal 1 — start the Echo Agent
+python examples/hello_world.py server
+
+# Terminal 2 — send it a task
+python examples/hello_world.py client <PEER_ID from Terminal 1>
+```
+
 ### 1. Local network -- zero configuration
 
-Two agents on the same LAN can communicate immediately:
+Two agents on the same LAN discover each other automatically via mDNS:
 
 **Agent A (server):**
 
@@ -42,18 +58,18 @@ Two agents on the same LAN can communicate immediately:
 from agentanycast import Node, AgentCard, Skill
 
 card = AgentCard(
-    name="echo-agent",
+    name="EchoAgent",
     description="Echoes back any message",
     skills=[Skill(id="echo", description="Echo messages")],
 )
 
-async def handler(task):
-    text = task.message["parts"][0]["text"]
-    await task.complete(message={"role": "agent", "parts": [{"text": text}]})
+async with Node(card=card) as node:
+    @node.on_task
+    async def handle(task):
+        text = task.messages[-1].parts[0].text
+        await task.complete(artifacts=[{"parts": [{"text": f"Echo: {text}"}]}])
 
-node = Node(card=card)
-node.on_task(handler)
-await node.serve_forever()
+    await node.serve_forever()
 ```
 
 **Agent B (client):**
@@ -61,16 +77,15 @@ await node.serve_forever()
 ```python
 from agentanycast import Node, AgentCard
 
-card = AgentCard(name="client", description="A client agent", skills=[])
+card = AgentCard(name="Client", description="A client agent", skills=[])
 
 async with Node(card=card) as node:
-    # Peer ID is printed by Agent A on startup
     handle = await node.send_task(
         peer_id="12D3KooW...",
         message={"role": "user", "parts": [{"text": "Hello!"}]},
     )
     result = await handle.wait()
-    print(result)
+    print(result.artifacts[0].parts[0].text)  # "Echo: Hello!"
 ```
 
 ### 2. Cross-network -- deploy your own relay
@@ -114,9 +129,9 @@ export AGENTANYCAST_BOOTSTRAP_PEERS="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW..."
 | Parameter | Description | Default |
 |---|---|---|
 | `card` | Your agent's `AgentCard` | Required |
-| `relay` | Relay server multiaddr for cross-network communication | None (LAN only) |
+| `relay` | Relay server multiaddr for cross-network communication | `None` (LAN only) |
 | `daemon_path` | Path to a local `agentanycastd` binary | Auto-download |
-| `daemon_version` | Version to auto-download | `0.1.0` |
+| `home` | Data directory for daemon state (key, socket, store). Use different values to run multiple nodes on the same machine. | `~/.agentanycast` |
 
 ## Requirements
 
