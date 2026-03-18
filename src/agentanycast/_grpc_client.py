@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 
@@ -22,6 +23,15 @@ from agentanycast.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+# gRPC status codes that indicate transient stream failures worth retrying.
+_RETRYABLE_CODES = frozenset(
+    {
+        grpc.StatusCode.UNAVAILABLE,
+        grpc.StatusCode.INTERNAL,
+        grpc.StatusCode.UNKNOWN,
+    }
+)
 
 
 class GrpcClient:
@@ -177,26 +187,72 @@ class GrpcClient:
             raise
 
     async def subscribe_task_updates(
-        self, task_id: str
+        self, task_id: str, *, max_retries: int = 3
     ) -> AsyncIterator[node_service_pb2.SubscribeTaskUpdatesResponse]:
-        """Stream status updates for a specific task."""
-        stub = self._ensure_connected()
-        async for event in stub.SubscribeTaskUpdates(
-            node_service_pb2.SubscribeTaskUpdatesRequest(task_id=task_id)
-        ):
-            yield event
+        """Stream status updates for a specific task.
+
+        Automatically reconnects on transient gRPC errors with exponential backoff.
+        """
+        backoff = 0.5
+        retries = 0
+        while True:
+            stub = self._ensure_connected()
+            try:
+                async for event in stub.SubscribeTaskUpdates(
+                    node_service_pb2.SubscribeTaskUpdatesRequest(task_id=task_id)
+                ):
+                    retries = 0  # reset on successful message
+                    backoff = 0.5
+                    yield event
+                return  # stream completed normally
+            except grpc.aio.AioRpcError as e:
+                if e.code() in _RETRYABLE_CODES and retries < max_retries:
+                    retries += 1
+                    logger.warning(
+                        "Task update stream broken (retry %d/%d): %s",
+                        retries,
+                        max_retries,
+                        e.code(),
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 8.0)
+                else:
+                    raise
 
     # ── Task Server Operations ─────────────────────────────────
 
     async def subscribe_incoming_tasks(
-        self,
+        self, *, max_retries: int = 5
     ) -> AsyncIterator[node_service_pb2.SubscribeIncomingTasksResponse]:
-        """Stream new incoming task requests from remote agents."""
-        stub = self._ensure_connected()
-        async for event in stub.SubscribeIncomingTasks(
-            node_service_pb2.SubscribeIncomingTasksRequest()
-        ):
-            yield event
+        """Stream new incoming task requests from remote agents.
+
+        Automatically reconnects on transient gRPC errors with exponential backoff.
+        """
+        backoff = 0.5
+        retries = 0
+        while True:
+            stub = self._ensure_connected()
+            try:
+                async for event in stub.SubscribeIncomingTasks(
+                    node_service_pb2.SubscribeIncomingTasksRequest()
+                ):
+                    retries = 0
+                    backoff = 0.5
+                    yield event
+                return
+            except grpc.aio.AioRpcError as e:
+                if e.code() in _RETRYABLE_CODES and retries < max_retries:
+                    retries += 1
+                    logger.warning(
+                        "Incoming tasks stream broken (retry %d/%d): %s",
+                        retries,
+                        max_retries,
+                        e.code(),
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 8.0)
+                else:
+                    raise
 
     async def update_task_status(
         self,
