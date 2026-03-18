@@ -34,10 +34,19 @@ from agentanycast.exceptions import (
     TaskRejectedError,
     TaskTimeoutError,
 )
+from agentanycast.did import did_key_to_peer_id, peer_id_to_did_key
+from agentanycast.mcp import MCPTool, mcp_tool_to_skill, mcp_tools_to_agent_card, skill_to_mcp_tool
 from agentanycast.node import Node
+
+# v0.3: Lazy imports for optional compat modules (avoid hard httpx dependency at import time).
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
+    if name == "AGNTCYDirectory":
+        from agentanycast.compat.agntcy import AGNTCYDirectory
+        return AGNTCYDirectory
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 from agentanycast.task import Artifact, IncomingTask, Message, Part, Task, TaskHandle, TaskStatus
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     # Core
@@ -73,4 +82,14 @@ __all__ = [
     "BridgeError",
     "BridgeConnectionError",
     "BridgeTranslationError",
+    # v0.3: DID utilities
+    "peer_id_to_did_key",
+    "did_key_to_peer_id",
+    # v0.3: MCP interop
+    "MCPTool",
+    "mcp_tool_to_skill",
+    "skill_to_mcp_tool",
+    "mcp_tools_to_agent_card",
+    # v0.3: AGNTCY compat
+    "AGNTCYDirectory",
 ]

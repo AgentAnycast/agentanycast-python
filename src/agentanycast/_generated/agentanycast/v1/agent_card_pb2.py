@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n agentanycast/v1/agent_card.proto\x12\x0f\x61gentanycast.v1\"\xfa\x01\n\tAgentCard\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version\x12)\n\x10protocol_version\x18\x04 \x01(\tR\x0fprotocolVersion\x12.\n\x06skills\x18\x05 \x03(\x0b\x32\x16.agentanycast.v1.SkillR\x06skills\x12\x42\n\rp2p_extension\x18\n \x01(\x0b\x32\x1d.agentanycast.v1.P2PExtensionR\x0cp2pExtension\"\x81\x01\n\x05Skill\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12!\n\x0cinput_schema\x18\x03 \x01(\tR\x0binputSchema\x12#\n\routput_schema\x18\x04 \x01(\tR\x0coutputSchema\"\x83\x01\n\x0cP2PExtension\x12\x17\n\x07peer_id\x18\x01 \x01(\tR\x06peerId\x12\x31\n\x14supported_transports\x18\x02 \x03(\tR\x13supportedTransports\x12\'\n\x0frelay_addresses\x18\x03 \x03(\tR\x0erelayAddressesBRZPgithub.com/agentanycast/agentanycast-proto/gen/go/agentanycast/v1;agentanycastv1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n agentanycast/v1/agent_card.proto\x12\x0f\x61gentanycast.v1\"\xfa\x01\n\tAgentCard\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version\x12)\n\x10protocol_version\x18\x04 \x01(\tR\x0fprotocolVersion\x12.\n\x06skills\x18\x05 \x03(\x0b\x32\x16.agentanycast.v1.SkillR\x06skills\x12\x42\n\rp2p_extension\x18\n \x01(\x0b\x32\x1d.agentanycast.v1.P2PExtensionR\x0cp2pExtension\"\x81\x01\n\x05Skill\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12!\n\x0cinput_schema\x18\x03 \x01(\tR\x0binputSchema\x12#\n\routput_schema\x18\x04 \x01(\tR\x0coutputSchema\"\x9c\x01\n\x0cP2PExtension\x12\x17\n\x07peer_id\x18\x01 \x01(\tR\x06peerId\x12\x31\n\x14supported_transports\x18\x02 \x03(\tR\x13supportedTransports\x12\'\n\x0frelay_addresses\x18\x03 \x03(\tR\x0erelayAddresses\x12\x17\n\x07\x64id_key\x18\x04 \x01(\tR\x06\x64idKeyBRZPgithub.com/agentanycast/agentanycast-proto/gen/go/agentanycast/v1;agentanycastv1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,5 +37,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SKILL']._serialized_start=307
   _globals['_SKILL']._serialized_end=436
   _globals['_P2PEXTENSION']._serialized_start=439
-  _globals['_P2PEXTENSION']._serialized_end=570
+  _globals['_P2PEXTENSION']._serialized_end=595
 # @@protoc_insertion_point(module_scope)

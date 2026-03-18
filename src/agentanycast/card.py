@@ -52,6 +52,8 @@ class AgentCard:
     peer_id: str | None = None
     supported_transports: list[str] = field(default_factory=list)
     relay_addresses: list[str] = field(default_factory=list)
+    # v0.3: W3C DID (did:key) derived from the node's Ed25519 public key.
+    did_key: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -62,11 +64,14 @@ class AgentCard:
             "skills": [s.to_dict() for s in self.skills],
         }
         if self.peer_id:
-            d["agentanycast"] = {
+            p2p: dict[str, Any] = {
                 "peer_id": self.peer_id,
                 "supported_transports": self.supported_transports,
                 "relay_addresses": self.relay_addresses,
             }
+            if self.did_key:
+                p2p["did_key"] = self.did_key
+            d["agentanycast"] = p2p
         return d
 
     @classmethod
@@ -82,4 +87,5 @@ class AgentCard:
             peer_id=p2p.get("peer_id"),
             supported_transports=p2p.get("supported_transports", []),
             relay_addresses=p2p.get("relay_addresses", []),
+            did_key=p2p.get("did_key"),
         )
