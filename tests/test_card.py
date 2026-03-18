@@ -46,6 +46,20 @@ def test_agent_card_with_p2p_extension():
     assert restored.supported_transports == ["tcp", "quic"]
 
 
+def test_agent_card_with_did_key():
+    card = AgentCard(
+        name="DIDTest",
+        peer_id="12D3KooWTest",
+        did_key="did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    )
+    d = card.to_dict()
+    assert d["agentanycast"]["did_key"] == "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+
+    restored = AgentCard.from_dict(d)
+    assert restored.did_key == "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+    assert restored.peer_id == "12D3KooWTest"
+
+
 def test_agent_card_without_p2p_extension():
     card = AgentCard(name="Simple")
     d = card.to_dict()

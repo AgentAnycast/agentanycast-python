@@ -87,7 +87,7 @@ class TestDaemonManagerInit:
 
     def test_default_version(self):
         dm = DaemonManager()
-        assert dm._daemon_version == "0.2.0"
+        assert dm._daemon_version == "0.3.0"
 
     def test_custom_version(self):
         dm = DaemonManager(daemon_version="0.2.0")
