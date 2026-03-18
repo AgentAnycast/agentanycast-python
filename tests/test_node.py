@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from agentanycast._generated.agentanycast.v1 import (
@@ -537,3 +539,103 @@ class TestOnTaskDecorator:
 
         result = node.on_task(my_handler)
         assert result is my_handler
+
+
+# ── Background Task Tracking ────────────────────────────────
+
+
+class TestBackgroundTaskTracking:
+    def test_background_tasks_set_initialized(self):
+        card = AgentCard(name="TestNode")
+        node = Node(card=card)
+        assert isinstance(node._background_tasks, set)
+        assert len(node._background_tasks) == 0
+
+    @pytest.mark.asyncio
+    async def test_stop_cancels_background_tasks(self):
+        """stop() should cancel all background tasks without error."""
+        card = AgentCard(name="TestNode")
+        node = Node(card=card)
+        # Simulate running state without real gRPC
+        node._running = True
+
+        # Create a long-running background task
+        cancelled = asyncio.Event()
+
+        async def long_running() -> None:
+            try:
+                await asyncio.sleep(100)
+            except asyncio.CancelledError:
+                cancelled.set()
+                raise
+
+        bg = asyncio.create_task(long_running())
+        node._background_tasks.add(bg)
+        bg.add_done_callback(node._background_tasks.discard)
+
+        assert len(node._background_tasks) == 1
+
+        # Let the task start running (reach the await sleep).
+        await asyncio.sleep(0)
+
+        # stop() should cancel the background task
+        await node.stop()
+
+        assert cancelled.is_set()
+        assert len(node._background_tasks) == 0
+        assert node._running is False
+
+    @pytest.mark.asyncio
+    async def test_done_callback_removes_completed_tasks(self):
+        """Completed tasks should be auto-removed from _background_tasks."""
+        card = AgentCard(name="TestNode")
+        node = Node(card=card)
+
+        completed = asyncio.Event()
+
+        async def quick_task() -> None:
+            completed.set()
+
+        bg = asyncio.create_task(quick_task())
+        node._background_tasks.add(bg)
+        bg.add_done_callback(node._background_tasks.discard)
+
+        await completed.wait()
+        # Give the event loop a tick to process the done callback.
+        await asyncio.sleep(0.01)
+
+        assert len(node._background_tasks) == 0
+
+    @pytest.mark.asyncio
+    async def test_multiple_background_tasks_tracked(self):
+        """Multiple tasks should all be tracked and cleaned up."""
+        card = AgentCard(name="TestNode")
+        node = Node(card=card)
+        node._running = True
+
+        events: list[asyncio.Event] = []
+        for _ in range(5):
+            evt = asyncio.Event()
+            events.append(evt)
+
+            async def sleeper(e: asyncio.Event = evt) -> None:
+                try:
+                    await asyncio.sleep(100)
+                except asyncio.CancelledError:
+                    e.set()
+                    raise
+
+            bg = asyncio.create_task(sleeper())
+            node._background_tasks.add(bg)
+            bg.add_done_callback(node._background_tasks.discard)
+
+        assert len(node._background_tasks) == 5
+
+        # Let all tasks start running (reach their await sleep).
+        await asyncio.sleep(0)
+
+        await node.stop()
+
+        for evt in events:
+            assert evt.is_set()
+        assert len(node._background_tasks) == 0
