@@ -270,6 +270,19 @@ class IncomingTask:
         """Mark the task as failed."""
         await self._update_fn(self.task_id, TaskStatus.FAILED, None, error)
 
-    async def request_input(self, message: dict[str, Any] | Message) -> None:
-        """Request additional input from the client."""
-        await self._update_fn(self.task_id, TaskStatus.INPUT_REQUIRED, None, None)
+    async def request_input(self, message: dict[str, Any] | Message | None = None) -> None:
+        """Request additional input from the client.
+
+        Args:
+            message: Optional message describing what input is needed.
+        """
+        msg_text: str | None = None
+        if message is not None:
+            if isinstance(message, Message):
+                texts = [p.text for p in message.parts if p.text]
+                msg_text = " ".join(texts) if texts else None
+            elif isinstance(message, dict):
+                parts = message.get("parts", [])
+                texts = [p.get("text", "") for p in parts if p.get("text")]
+                msg_text = " ".join(texts) if texts else None
+        await self._update_fn(self.task_id, TaskStatus.INPUT_REQUIRED, None, msg_text)

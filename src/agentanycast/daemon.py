@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import atexit
+import importlib.metadata
 import logging
 import os
 import platform
@@ -11,8 +12,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import grpc
 import httpx
 
+from agentanycast._generated.agentanycast.v1 import node_service_pb2, node_service_pb2_grpc
 from agentanycast.exceptions import DaemonConnectionError, DaemonNotFoundError, DaemonStartError
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,14 @@ _PLATFORM_MAP = {
 }
 
 _DEFAULT_BASE = Path.home() / ".agentanycast"
+
+
+def _get_package_version() -> str:
+    """Derive the daemon version from the installed package metadata."""
+    try:
+        return importlib.metadata.version("agentanycast")
+    except importlib.metadata.PackageNotFoundError:
+        return "0.1.0"
 
 
 def _detect_platform() -> tuple[str, str]:
@@ -59,7 +70,7 @@ class DaemonManager:
     def __init__(
         self,
         daemon_bin: str | Path | None = None,
-        daemon_version: str = "0.1.0",
+        daemon_version: str | None = None,
         key_path: str | Path | None = None,
         grpc_listen: str | None = None,
         relay: str | None = None,
@@ -72,7 +83,7 @@ class DaemonManager:
         self._log_dir = self._base / "logs"
 
         self._daemon_bin = Path(daemon_bin) if daemon_bin else None
-        self._daemon_version = daemon_version
+        self._daemon_version = daemon_version or _get_package_version()
         self._key_path = str(key_path) if key_path else str(self._base / "key")
         self._grpc_listen = grpc_listen or f"unix://{self._base / 'daemon.sock'}"
         self._relay = relay
@@ -203,24 +214,66 @@ class DaemonManager:
         # Wait for daemon to be ready (health check)
         await self._wait_ready(timeout=10.0)
 
+    def _read_recent_logs(self, max_lines: int = 20) -> str:
+        """Read the last N lines of daemon.log for error diagnostics."""
+        log_file = self._log_dir / "daemon.log"
+        if not log_file.exists():
+            return ""
+        try:
+            lines = log_file.read_text().splitlines()
+            tail = lines[-max_lines:]
+            return "\n".join(tail)
+        except OSError:
+            return ""
+
     async def _wait_ready(self, timeout: float) -> None:
-        """Poll until the daemon's UDS appears and is connectable."""
+        """Poll until the daemon's UDS appears and responds to gRPC calls."""
         deadline = asyncio.get_event_loop().time() + timeout
         while asyncio.get_event_loop().time() < deadline:
             if self._process and self._process.poll() is not None:
-                raise DaemonStartError(
+                logs = self._read_recent_logs()
+                msg = (
                     f"Daemon exited with code {self._process.returncode}. "
                     f"Check logs at {self._log_dir / 'daemon.log'}"
                 )
+                if logs:
+                    msg += f"\n\nRecent logs:\n{logs}"
+                raise DaemonStartError(msg)
+
             if self.sock_path.exists():
-                logger.info("Daemon ready at %s", self._grpc_listen)
-                return
+                # Socket exists — verify gRPC server is actually ready.
+                if await self._grpc_health_check():
+                    logger.info("Daemon ready at %s", self._grpc_listen)
+                    return
+
             await asyncio.sleep(0.1)
 
-        raise DaemonConnectionError(
+        logs = self._read_recent_logs()
+        msg = (
             f"Daemon did not become ready within {timeout}s. "
             f"Check logs at {self._log_dir / 'daemon.log'}"
         )
+        if logs:
+            msg += f"\n\nRecent logs:\n{logs}"
+        raise DaemonConnectionError(msg)
+
+    async def _grpc_health_check(self) -> bool:
+        """Attempt a single gRPC GetNodeInfo call to verify daemon readiness."""
+        try:
+            channel = grpc.aio.insecure_channel(self._grpc_listen)
+            try:
+                stub = node_service_pb2_grpc.NodeServiceStub(channel)
+                await stub.GetNodeInfo(
+                    node_service_pb2.GetNodeInfoRequest(),
+                    timeout=2,
+                )
+                return True
+            except grpc.aio.AioRpcError:
+                return False
+            finally:
+                await channel.close()
+        except Exception:
+            return False
 
     def stop_sync(self) -> None:
         """Synchronously stop the daemon (for atexit)."""

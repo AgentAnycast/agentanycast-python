@@ -268,6 +268,8 @@ class Node:
 
         # In-memory task tracking for TaskHandle updates
         self._tasks: dict[str, TaskHandle] = {}
+        # Track background asyncio tasks to prevent garbage collection
+        self._background_tasks: set[asyncio.Task[None]] = set()
 
     @property
     def peer_id(self) -> str:
@@ -325,6 +327,14 @@ class Node:
                 await self._serve_task
             except asyncio.CancelledError:
                 pass
+
+        # Cancel all tracked background tasks
+        bg_tasks = list(self._background_tasks)
+        for bg in bg_tasks:
+            bg.cancel()
+        if bg_tasks:
+            await asyncio.gather(*bg_tasks, return_exceptions=True)
+            self._background_tasks.clear()
 
         # Close gRPC channel
         if self._grpc:
@@ -417,7 +427,9 @@ class Node:
         self._tasks[task.task_id] = handle
 
         # Start background task to receive updates for this task
-        asyncio.create_task(self._watch_task_updates(task.task_id, handle))
+        bg = asyncio.create_task(self._watch_task_updates(task.task_id, handle))
+        self._background_tasks.add(bg)
+        bg.add_done_callback(self._background_tasks.discard)
 
         logger.info("Task sent: %s -> %s", task.task_id, peer_id)
         return handle
@@ -524,7 +536,9 @@ class Node:
 
                 # Dispatch to all registered handlers
                 for handler in self._task_handlers:
-                    asyncio.create_task(handler(incoming))
+                    bg = asyncio.create_task(handler(incoming))
+                    self._background_tasks.add(bg)
+                    bg.add_done_callback(self._background_tasks.discard)
 
         except asyncio.CancelledError:
             pass
