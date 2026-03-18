@@ -376,24 +376,40 @@ class Node:
 
     async def send_task(
         self,
-        peer_id: str,
         message: dict[str, Any] | Message,
-        target_skill_id: str | None = None,
-        context_id: str | None = None,
+        *,
+        peer_id: str | None = None,
+        skill: str | None = None,
+        url: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> TaskHandle:
         """Send an A2A Task to a remote agent.
 
+        Exactly one of ``peer_id``, ``skill``, or ``url`` must be provided:
+        - ``peer_id``: Send directly to a known PeerID.
+        - ``skill``: Anycast — route by capability to any matching agent.
+        - ``url``: HTTP Bridge — call an external HTTP A2A agent.
+
         Args:
-            peer_id: The PeerID of the target agent.
             message: The message to send (dict or Message object).
-            target_skill_id: Optional skill to target on the remote agent.
-            context_id: Optional context ID for multi-turn conversations.
+            peer_id: Target PeerID for direct addressing.
+            skill: Target skill ID for capability-based routing (v0.2).
+            url: Target URL for HTTP bridge outbound (v0.2).
+            metadata: Optional key-value metadata for the task.
 
         Returns:
             A TaskHandle for tracking the task's progress.
+
+        Raises:
+            SkillNotFoundError: No agents found for the given skill.
+            BridgeConnectionError: HTTP bridge outbound failed.
         """
         self._ensure_running()
         assert self._grpc is not None
+
+        targets = sum(x is not None for x in (peer_id, skill, url))
+        if targets != 1:
+            raise ValueError("Exactly one of peer_id, skill, or url must be provided")
 
         # Normalize message
         if isinstance(message, dict):
@@ -407,10 +423,11 @@ class Node:
         # Convert to proto and send via gRPC
         pb_msg = _message_to_proto(msg)
         pb_task = await self._grpc.send_task(
-            peer_id=peer_id,
             message=pb_msg,
-            target_skill_id=target_skill_id or "",
-            context_id=context_id or "",
+            peer_id=peer_id,
+            skill_id=skill,
+            url=url,
+            metadata=metadata,
         )
 
         # Convert to Python Task
@@ -431,8 +448,50 @@ class Node:
         self._background_tasks.add(bg)
         bg.add_done_callback(self._background_tasks.discard)
 
-        logger.info("Task sent: %s -> %s", task.task_id, peer_id)
+        target_desc = peer_id or skill or url
+        logger.info("Task sent: %s -> %s", task.task_id, target_desc)
         return handle
+
+    async def discover(
+        self,
+        skill: str,
+        *,
+        tags: dict[str, str] | None = None,
+        limit: int = 0,
+    ) -> list[dict[str, Any]]:
+        """Discover agents that offer a specific skill.
+
+        Queries the Relay's Skill Registry for agents matching the given
+        skill ID. Optionally filter by tags.
+
+        Args:
+            skill: The skill ID to search for.
+            tags: Optional tag filters (AND semantics).
+            limit: Maximum number of results (0 = server default).
+
+        Returns:
+            List of agent info dicts with peer_id, agent_name,
+            agent_description, and skills.
+
+        Raises:
+            SkillNotFoundError: Discovery service unavailable.
+        """
+        self._ensure_running()
+        assert self._grpc is not None
+
+        resp = await self._grpc.discover(skill, tags=tags, limit=limit)
+        return [
+            {
+                "peer_id": agent.peer_id,
+                "agent_name": agent.agent_name,
+                "agent_description": agent.agent_description,
+                "skills": [
+                    {"skill_id": s.skill_id, "description": s.description}
+                    for s in agent.skills
+                ],
+            }
+            for agent in resp.agents
+        ]
 
     async def connect_peer(
         self, peer_id: str, addresses: list[str] | None = None

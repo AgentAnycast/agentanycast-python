@@ -83,3 +83,29 @@ class CardError(AgentAnycastError):
 
 class CardNotAvailableError(CardError):
     """The peer has not provided an Agent Card."""
+
+
+# ── Routing Errors (v0.2) ────────────────────────────────
+
+
+class RoutingError(AgentAnycastError):
+    """Base for routing-related errors."""
+
+
+class SkillNotFoundError(RoutingError):
+    """No agents found offering the requested skill."""
+
+
+# ── Bridge Errors (v0.2) ─────────────────────────────────
+
+
+class BridgeError(AgentAnycastError):
+    """Base for HTTP bridge-related errors."""
+
+
+class BridgeConnectionError(BridgeError):
+    """Failed to connect to the external HTTP A2A agent."""
+
+
+class BridgeTranslationError(BridgeError):
+    """Failed to translate between HTTP and P2P A2A formats."""

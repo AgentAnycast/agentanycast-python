@@ -4,9 +4,21 @@ Python SDK for building distributed AI agent systems with end-to-end encryption
 and automatic NAT traversal.
 """
 
+# Extend __path__ so generated protobuf stubs (which import ``agentanycast.v1``)
+# resolve correctly within the ``_generated/agentanycast/`` sub-tree.
+import pathlib as _pathlib
+
+_generated_pkg = str(_pathlib.Path(__file__).parent / "_generated" / "agentanycast")
+if _generated_pkg not in __path__:
+    __path__.append(_generated_pkg)
+del _pathlib, _generated_pkg
+
 from agentanycast.card import AgentCard, Skill
 from agentanycast.exceptions import (
     AgentAnycastError,
+    BridgeConnectionError,
+    BridgeError,
+    BridgeTranslationError,
     CardNotAvailableError,
     DaemonConnectionError,
     DaemonNotFoundError,
@@ -14,6 +26,8 @@ from agentanycast.exceptions import (
     PeerAuthenticationError,
     PeerDisconnectedError,
     PeerNotFoundError,
+    RoutingError,
+    SkillNotFoundError,
     TaskCanceledError,
     TaskFailedError,
     TaskNotFoundError,
@@ -23,7 +37,7 @@ from agentanycast.exceptions import (
 from agentanycast.node import Node
 from agentanycast.task import Artifact, IncomingTask, Message, Part, Task, TaskHandle, TaskStatus
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     # Core
@@ -52,4 +66,11 @@ __all__ = [
     "TaskCanceledError",
     "TaskFailedError",
     "TaskRejectedError",
+    # v0.2: Routing errors
+    "RoutingError",
+    "SkillNotFoundError",
+    # v0.2: Bridge errors
+    "BridgeError",
+    "BridgeConnectionError",
+    "BridgeTranslationError",
 ]

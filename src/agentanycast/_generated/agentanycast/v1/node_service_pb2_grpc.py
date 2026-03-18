@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from agentanycast._generated.agentanycast.v1 import node_service_pb2 as agentanycast_dot_v1_dot_node__service__pb2
+from agentanycast.v1 import node_service_pb2 as agentanycast_dot_v1_dot_node__service__pb2
 
 
 class NodeServiceStub(object):
@@ -20,67 +20,82 @@ class NodeServiceStub(object):
                 '/agentanycast.v1.NodeService/GetNodeInfo',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.GetNodeInfoRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.GetNodeInfoResponse.FromString,
-                )
+                _registered_method=True)
         self.SetAgentCard = channel.unary_unary(
                 '/agentanycast.v1.NodeService/SetAgentCard',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SetAgentCardRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SetAgentCardResponse.FromString,
-                )
+                _registered_method=True)
         self.ConnectPeer = channel.unary_unary(
                 '/agentanycast.v1.NodeService/ConnectPeer',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.ConnectPeerRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.ConnectPeerResponse.FromString,
-                )
+                _registered_method=True)
         self.ListPeers = channel.unary_unary(
                 '/agentanycast.v1.NodeService/ListPeers',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.ListPeersRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.ListPeersResponse.FromString,
-                )
+                _registered_method=True)
         self.GetPeerCard = channel.unary_unary(
                 '/agentanycast.v1.NodeService/GetPeerCard',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.GetPeerCardRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.GetPeerCardResponse.FromString,
-                )
+                _registered_method=True)
         self.SendTask = channel.unary_unary(
                 '/agentanycast.v1.NodeService/SendTask',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SendTaskRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SendTaskResponse.FromString,
-                )
+                _registered_method=True)
         self.GetTask = channel.unary_unary(
                 '/agentanycast.v1.NodeService/GetTask',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.GetTaskRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.GetTaskResponse.FromString,
-                )
+                _registered_method=True)
         self.CancelTask = channel.unary_unary(
                 '/agentanycast.v1.NodeService/CancelTask',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.CancelTaskRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.CancelTaskResponse.FromString,
-                )
+                _registered_method=True)
         self.SubscribeTaskUpdates = channel.unary_stream(
                 '/agentanycast.v1.NodeService/SubscribeTaskUpdates',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesResponse.FromString,
-                )
+                _registered_method=True)
         self.SubscribeIncomingTasks = channel.unary_stream(
                 '/agentanycast.v1.NodeService/SubscribeIncomingTasks',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksResponse.FromString,
-                )
+                _registered_method=True)
         self.UpdateTaskStatus = channel.unary_unary(
                 '/agentanycast.v1.NodeService/UpdateTaskStatus',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.UpdateTaskStatusRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.UpdateTaskStatusResponse.FromString,
-                )
+                _registered_method=True)
         self.CompleteTask = channel.unary_unary(
                 '/agentanycast.v1.NodeService/CompleteTask',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.CompleteTaskRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.CompleteTaskResponse.FromString,
-                )
+                _registered_method=True)
         self.FailTask = channel.unary_unary(
                 '/agentanycast.v1.NodeService/FailTask',
                 request_serializer=agentanycast_dot_v1_dot_node__service__pb2.FailTaskRequest.SerializeToString,
                 response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.FailTaskResponse.FromString,
-                )
+                _registered_method=True)
+        self.SubscribeTaskStream = channel.unary_stream(
+                '/agentanycast.v1.NodeService/SubscribeTaskStream',
+                request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamRequest.SerializeToString,
+                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamResponse.FromString,
+                _registered_method=True)
+        self.SendStreamingArtifact = channel.stream_unary(
+                '/agentanycast.v1.NodeService/SendStreamingArtifact',
+                request_serializer=agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactRequest.SerializeToString,
+                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactResponse.FromString,
+                _registered_method=True)
+        self.Discover = channel.unary_unary(
+                '/agentanycast.v1.NodeService/Discover',
+                request_serializer=agentanycast_dot_v1_dot_node__service__pb2.DiscoverRequest.SerializeToString,
+                response_deserializer=agentanycast_dot_v1_dot_node__service__pb2.DiscoverResponse.FromString,
+                _registered_method=True)
 
 
 class NodeServiceServicer(object):
@@ -132,6 +147,7 @@ class NodeServiceServicer(object):
         """── Task Operations (Client Mode) ─────────────────────────
 
         SendTask sends an A2A Task to a remote agent.
+        Supports three addressing modes: peer_id, skill_id (anycast), or url (HTTP bridge).
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -183,6 +199,31 @@ class NodeServiceServicer(object):
 
     def FailTask(self, request, context):
         """FailTask marks a task as failed with an error.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SubscribeTaskStream(self, request, context):
+        """── Streaming (v0.2) ──────────────────────────────────────
+
+        SubscribeTaskStream receives streaming artifact chunks for a task.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SendStreamingArtifact(self, request_iterator, context):
+        """SendStreamingArtifact sends streaming artifact chunks from the server agent.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Discover(self, request, context):
+        """── Discovery (v0.2) ──────────────────────────────────────
+
+        Discover finds agents that offer a specific skill via the Relay registry.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -256,10 +297,26 @@ def add_NodeServiceServicer_to_server(servicer, server):
                     request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.FailTaskRequest.FromString,
                     response_serializer=agentanycast_dot_v1_dot_node__service__pb2.FailTaskResponse.SerializeToString,
             ),
+            'SubscribeTaskStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.SubscribeTaskStream,
+                    request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamRequest.FromString,
+                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamResponse.SerializeToString,
+            ),
+            'SendStreamingArtifact': grpc.stream_unary_rpc_method_handler(
+                    servicer.SendStreamingArtifact,
+                    request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactRequest.FromString,
+                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactResponse.SerializeToString,
+            ),
+            'Discover': grpc.unary_unary_rpc_method_handler(
+                    servicer.Discover,
+                    request_deserializer=agentanycast_dot_v1_dot_node__service__pb2.DiscoverRequest.FromString,
+                    response_serializer=agentanycast_dot_v1_dot_node__service__pb2.DiscoverResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'agentanycast.v1.NodeService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('agentanycast.v1.NodeService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -279,11 +336,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/GetNodeInfo',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/GetNodeInfo',
             agentanycast_dot_v1_dot_node__service__pb2.GetNodeInfoRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.GetNodeInfoResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def SetAgentCard(request,
@@ -296,11 +363,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/SetAgentCard',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/SetAgentCard',
             agentanycast_dot_v1_dot_node__service__pb2.SetAgentCardRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.SetAgentCardResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def ConnectPeer(request,
@@ -313,11 +390,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/ConnectPeer',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/ConnectPeer',
             agentanycast_dot_v1_dot_node__service__pb2.ConnectPeerRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.ConnectPeerResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def ListPeers(request,
@@ -330,11 +417,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/ListPeers',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/ListPeers',
             agentanycast_dot_v1_dot_node__service__pb2.ListPeersRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.ListPeersResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def GetPeerCard(request,
@@ -347,11 +444,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/GetPeerCard',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/GetPeerCard',
             agentanycast_dot_v1_dot_node__service__pb2.GetPeerCardRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.GetPeerCardResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def SendTask(request,
@@ -364,11 +471,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/SendTask',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/SendTask',
             agentanycast_dot_v1_dot_node__service__pb2.SendTaskRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.SendTaskResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def GetTask(request,
@@ -381,11 +498,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/GetTask',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/GetTask',
             agentanycast_dot_v1_dot_node__service__pb2.GetTaskRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.GetTaskResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def CancelTask(request,
@@ -398,11 +525,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/CancelTask',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/CancelTask',
             agentanycast_dot_v1_dot_node__service__pb2.CancelTaskRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.CancelTaskResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def SubscribeTaskUpdates(request,
@@ -415,11 +552,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/agentanycast.v1.NodeService/SubscribeTaskUpdates',
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/SubscribeTaskUpdates',
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskUpdatesResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def SubscribeIncomingTasks(request,
@@ -432,11 +579,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/agentanycast.v1.NodeService/SubscribeIncomingTasks',
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/SubscribeIncomingTasks',
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.SubscribeIncomingTasksResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def UpdateTaskStatus(request,
@@ -449,11 +606,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/UpdateTaskStatus',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/UpdateTaskStatus',
             agentanycast_dot_v1_dot_node__service__pb2.UpdateTaskStatusRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.UpdateTaskStatusResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def CompleteTask(request,
@@ -466,11 +633,21 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/CompleteTask',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/CompleteTask',
             agentanycast_dot_v1_dot_node__service__pb2.CompleteTaskRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.CompleteTaskResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def FailTask(request,
@@ -483,8 +660,99 @@ class NodeService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/agentanycast.v1.NodeService/FailTask',
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/FailTask',
             agentanycast_dot_v1_dot_node__service__pb2.FailTaskRequest.SerializeToString,
             agentanycast_dot_v1_dot_node__service__pb2.FailTaskResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SubscribeTaskStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/SubscribeTaskStream',
+            agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamRequest.SerializeToString,
+            agentanycast_dot_v1_dot_node__service__pb2.SubscribeTaskStreamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SendStreamingArtifact(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_unary(
+            request_iterator,
+            target,
+            '/agentanycast.v1.NodeService/SendStreamingArtifact',
+            agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactRequest.SerializeToString,
+            agentanycast_dot_v1_dot_node__service__pb2.SendStreamingArtifactResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Discover(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agentanycast.v1.NodeService/Discover',
+            agentanycast_dot_v1_dot_node__service__pb2.DiscoverRequest.SerializeToString,
+            agentanycast_dot_v1_dot_node__service__pb2.DiscoverResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)

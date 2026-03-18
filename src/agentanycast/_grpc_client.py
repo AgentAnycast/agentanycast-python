@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
 import grpc
 
@@ -19,6 +20,7 @@ from agentanycast.exceptions import (
     CardNotAvailableError,
     DaemonConnectionError,
     PeerNotFoundError,
+    SkillNotFoundError,
     TaskNotFoundError,
 )
 
@@ -142,27 +144,87 @@ class GrpcClient:
 
     async def send_task(
         self,
-        peer_id: str,
         message: a2a_models_pb2.Message,
-        target_skill_id: str = "",
-        context_id: str = "",
+        *,
+        peer_id: str | None = None,
+        skill_id: str | None = None,
+        url: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> a2a_models_pb2.Task:
-        """Send a task to a remote agent. Returns the created Task."""
+        """Send a task to a remote agent. Exactly one of peer_id, skill_id, or url must be set."""
         stub = self._ensure_connected()
+
+        kwargs: dict[str, Any] = {"message": message}
+        if metadata:
+            kwargs["metadata"] = metadata
+        if peer_id is not None:
+            kwargs["peer_id"] = peer_id
+        elif skill_id is not None:
+            kwargs["skill_id"] = skill_id
+        elif url is not None:
+            kwargs["url"] = url
+
         try:
-            resp = await stub.SendTask(
-                node_service_pb2.SendTaskRequest(
-                    peer_id=peer_id,
-                    message=message,
-                    target_skill_id=target_skill_id,
-                    context_id=context_id,
-                )
-            )
+            resp = await stub.SendTask(node_service_pb2.SendTaskRequest(**kwargs))
             return resp.task
         except grpc.aio.AioRpcError as e:
             if e.code() == grpc.StatusCode.UNAVAILABLE:
-                raise PeerNotFoundError(f"Cannot reach peer {peer_id}: {e.details()}")
+                raise PeerNotFoundError(f"Cannot reach target: {e.details()}")
+            if e.code() == grpc.StatusCode.NOT_FOUND:
+                raise SkillNotFoundError(f"No agents for skill: {e.details()}")
             raise
+
+    async def discover(
+        self,
+        skill_id: str,
+        *,
+        tags: dict[str, str] | None = None,
+        limit: int = 0,
+    ) -> node_service_pb2.DiscoverResponse:
+        """Discover agents offering a specific skill."""
+        stub = self._ensure_connected()
+        try:
+            return await stub.Discover(
+                node_service_pb2.DiscoverRequest(
+                    skill_id=skill_id,
+                    tags=tags or {},
+                    limit=limit,
+                )
+            )
+        except grpc.aio.AioRpcError as e:
+            if e.code() == grpc.StatusCode.UNAVAILABLE:
+                raise SkillNotFoundError(f"Discovery unavailable: {e.details()}")
+            raise
+
+    async def subscribe_task_stream(
+        self, task_id: str, *, max_retries: int = 3
+    ) -> AsyncIterator[node_service_pb2.SubscribeTaskStreamResponse]:
+        """Stream artifact chunks for a task."""
+        backoff = 0.5
+        retries = 0
+        while True:
+            stub = self._ensure_connected()
+            try:
+                async for event in stub.SubscribeTaskStream(
+                    node_service_pb2.SubscribeTaskStreamRequest(task_id=task_id)
+                ):
+                    retries = 0
+                    backoff = 0.5
+                    yield event
+                return
+            except grpc.aio.AioRpcError as e:
+                if e.code() in _RETRYABLE_CODES and retries < max_retries:
+                    retries += 1
+                    logger.warning(
+                        "Task stream broken (retry %d/%d): %s",
+                        retries,
+                        max_retries,
+                        e.code(),
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 8.0)
+                else:
+                    raise
 
     async def get_task(self, task_id: str) -> a2a_models_pb2.Task:
         """Get the current state of a task."""
