@@ -13,6 +13,13 @@ Python SDK for AgentAnycast -- decentralized A2A agent-to-agent communication ov
 pip install agentanycast
 ```
 
+With framework adapters:
+
+```bash
+pip install agentanycast[crewai]      # CrewAI integration
+pip install agentanycast[langgraph]   # LangGraph integration
+```
+
 ## How It Works
 
 ```
@@ -32,27 +39,25 @@ pip install agentanycast
 
 ## Quick Start
 
-### Try the hello world example
+### CLI
 
 ```bash
-# Prerequisites: build the daemon first
-cd agentanycast-node && go build -o agentanycastd ./cmd/agentanycastd/
+# Start an echo agent
+agentanycast demo
 
-# Install the SDK
-cd agentanycast-python && pip install -e .
+# Discover agents by skill
+agentanycast discover translate
 
-# Terminal 1 — start the Echo Agent
-python examples/hello_world.py server
+# Send a task to a specific agent
+agentanycast send 12D3KooW... "Hello!"
 
-# Terminal 2 — send it a task
-python examples/hello_world.py client <PEER_ID from Terminal 1>
+# Check node status
+agentanycast status
 ```
 
-### 1. Local network -- zero configuration
+### Python API
 
-Two agents on the same LAN discover each other automatically via mDNS:
-
-**Agent A (server):**
+**Server agent:**
 
 ```python
 from agentanycast import Node, AgentCard, Skill
@@ -72,7 +77,7 @@ async with Node(card=card) as node:
     await node.serve_forever()
 ```
 
-**Agent B (client):**
+**Client agent:**
 
 ```python
 from agentanycast import Node, AgentCard
@@ -88,30 +93,85 @@ async with Node(card=card) as node:
     print(result.artifacts[0].parts[0].text)  # "Echo: Hello!"
 ```
 
-### 2. Cross-network -- deploy your own relay
-
-```bash
-# On any VPS or cloud instance with a public IP:
-git clone https://github.com/AgentAnycast/agentanycast-relay && cd agentanycast-relay
-docker-compose up -d
-
-# Note the relay's multiaddr from the logs:
-# RELAY_ADDR=/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW...
-```
-
-Then point your agents to it:
+### Three Ways to Send a Task
 
 ```python
-node = Node(
-    card=card,
-    relay="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW...",
-)
+# 1. Direct — by Peer ID
+await node.send_task(peer_id="12D3KooW...", message=msg)
+
+# 2. Anycast — by skill (relay resolves the target)
+await node.send_task(skill="translate", message=msg)
+
+# 3. HTTP Bridge — to standard HTTP A2A agents
+await node.send_task(url="https://agent.example.com", message=msg)
 ```
 
-Or via environment variable:
+### Skill Discovery
 
-```bash
-export AGENTANYCAST_BOOTSTRAP_PEERS="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW..."
+```python
+# Find all agents offering a skill
+agents = await node.discover("translate")
+for agent in agents:
+    print(f"{agent.name}: {agent.skills}")
+
+# With tag filtering
+agents = await node.discover("translate", tags={"lang": "fr"})
+```
+
+## Framework Adapters
+
+### CrewAI
+
+Expose a CrewAI crew as a P2P agent:
+
+```python
+from agentanycast.adapters.crewai import serve_crew
+
+await serve_crew(crew, card=card, relay="...")
+```
+
+### LangGraph
+
+Expose a LangGraph graph as a P2P agent:
+
+```python
+from agentanycast.adapters.langgraph import serve_graph
+
+await serve_graph(compiled_graph, card=card, relay="...")
+```
+
+## Interoperability
+
+### W3C DID
+
+Convert between libp2p Peer IDs and W3C Decentralized Identifiers:
+
+```python
+from agentanycast.did import peer_id_to_did_key, did_key_to_peer_id
+
+did = peer_id_to_did_key("12D3KooW...")    # "did:key:z6Mk..."
+pid = did_key_to_peer_id("did:key:z6Mk...")  # "12D3KooW..."
+```
+
+### MCP (Model Context Protocol)
+
+Map MCP tools to A2A skills:
+
+```python
+from agentanycast.mcp import mcp_tools_to_agent_card
+
+card = mcp_tools_to_agent_card(mcp_tools, name="MCPAgent")
+```
+
+### AGNTCY Directory
+
+Query the AGNTCY agent directory for cross-ecosystem discovery:
+
+```python
+from agentanycast.compat.agntcy import AGNTCYDirectory
+
+directory = AGNTCYDirectory(base_url="https://directory.agntcy.org")
+agents = await directory.search("translation")
 ```
 
 ## API Reference
@@ -122,7 +182,7 @@ export AGENTANYCAST_BOOTSTRAP_PEERS="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW..."
 | `AgentCard` | Describes an agent's identity, capabilities, and metadata. |
 | `Skill` | Defines a single skill an agent can perform. |
 | `TaskHandle` | Returned by `send_task()`. Call `wait()` to block until the remote agent responds. |
-| `IncomingTask` | Passed to task handlers. Provides the incoming message and methods to respond (`complete()`, `fail()`). |
+| `IncomingTask` | Passed to task handlers. Provides the incoming message and methods to respond. |
 
 ## Node Options
 
@@ -131,7 +191,9 @@ export AGENTANYCAST_BOOTSTRAP_PEERS="/ip4/<YOUR_IP>/tcp/4001/p2p/12D3KooW..."
 | `card` | Your agent's `AgentCard` | Required |
 | `relay` | Relay server multiaddr for cross-network communication | `None` (LAN only) |
 | `daemon_path` | Path to a local `agentanycastd` binary | Auto-download |
-| `home` | Data directory for daemon state (key, socket, store). Use different values to run multiple nodes on the same machine. | `~/.agentanycast` |
+| `daemon_addr` | Address of an externally managed daemon | Auto-managed |
+| `key_path` | Path to Ed25519 identity key file | `<home>/key` |
+| `home` | Data directory for daemon state. Use different values to run multiple nodes on the same machine. | `~/.agentanycast` |
 
 ## Requirements
 
