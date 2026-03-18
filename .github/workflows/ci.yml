@@ -62,5 +62,5 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run unit tests
         run: pytest tests/ -v
