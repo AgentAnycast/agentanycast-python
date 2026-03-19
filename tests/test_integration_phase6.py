@@ -8,7 +8,6 @@ from agentanycast.card import AgentCard, Skill
 from agentanycast.did import did_key_to_peer_id, peer_id_to_did_key
 from agentanycast.mcp import MCPTool, mcp_tool_to_skill, mcp_tools_to_agent_card
 
-
 # ── DID + Card integration ────────────────────────────────────────────
 
 
@@ -114,6 +113,7 @@ class TestMCPCardIntegration:
             input_schema='{"type":"string"}',
             output_schema='{"type":"string"}',
         )
+        assert skill.output_schema is not None
         tool = mcp_tool_to_skill(MCPTool(name="translate", description="Translates"))
         # MCPTool → Skill does not carry output_schema
         assert tool.output_schema is None

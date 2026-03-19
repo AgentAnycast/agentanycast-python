@@ -75,6 +75,10 @@ ignore_errors = true
 follow_imports = "skip"
 
 [[tool.mypy.overrides]]
+module = "base58"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = ["grpc", "grpc.*", "grpc.aio", "grpc.aio.*", "google.protobuf.*", "crewai", "crewai.*", "langgraph", "langgraph.*"]
 ignore_missing_imports = true
 

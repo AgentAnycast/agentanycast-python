@@ -57,7 +57,7 @@ def _proto_status_to_python(s: int) -> TaskStatus:
 
 
 def _python_status_to_proto(s: TaskStatus) -> int:
-    return _STATUS_TO_PROTO_MAP.get(s, a2a_models_pb2.TASK_STATUS_UNSPECIFIED)
+    return int(_STATUS_TO_PROTO_MAP.get(s, a2a_models_pb2.TASK_STATUS_UNSPECIFIED))
 
 
 def _card_to_proto(card: AgentCard) -> agent_card_pb2.AgentCard:
@@ -102,8 +102,8 @@ def _proto_card_to_python(pb_card: agent_card_pb2.AgentCard) -> AgentCard:
         protocol_version=pb_card.protocol_version,
         skills=skills,
         peer_id=p2p.peer_id if p2p else None,
-        supported_transports=list(p2p.supported_transports) if p2p else None,
-        relay_addresses=list(p2p.relay_addresses) if p2p else None,
+        supported_transports=list(p2p.supported_transports) if p2p else [],
+        relay_addresses=list(p2p.relay_addresses) if p2p else [],
         did_key=p2p.did_key if p2p and p2p.did_key else None,
     )
 

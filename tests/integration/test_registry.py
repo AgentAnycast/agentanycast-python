@@ -15,6 +15,8 @@ grpc = pytest.importorskip("grpc")
 
 from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     registry_service_pb2 as reg_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     registry_service_pb2_grpc as reg_grpc,
 )
 

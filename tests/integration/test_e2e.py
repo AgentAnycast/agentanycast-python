@@ -13,25 +13,26 @@ Prerequisites:
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any
-
-import pytest
-
 import queue
 import threading
 import time
+from typing import Any
 
 import grpc
+import pytest
 
-from agentanycast import AgentCard, Message, Part, Skill
 from agentanycast._generated.agentanycast.v1 import (
     a2a_models_pb2 as a2a_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (
     agent_card_pb2 as card_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (
     node_service_pb2 as ns_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (
     node_service_pb2_grpc as ns_grpc,
 )
-from agentanycast.task import Artifact, IncomingTask
 
 
 @pytest.mark.integration

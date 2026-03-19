@@ -20,8 +20,8 @@ import signal
 import socket
 import subprocess
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -141,7 +141,6 @@ def relay_process(
         pytest.fail(f"Relay failed to start within 10s.\nStderr: {stderr}")
 
     # Parse peer ID from stdout.
-    relay_peer_id = ""
     relay_multiaddr = ""
     if proc.stdout:
         for line in iter(proc.stdout.readline, b""):

@@ -28,18 +28,28 @@ pytestmark = [
     ),
 ]
 
-import queue
-import threading
-import time
+import queue  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
 
 grpc = pytest.importorskip("grpc")
 
 from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     a2a_models_pb2 as a2a_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     agent_card_pb2 as card_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     node_service_pb2 as ns_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     node_service_pb2_grpc as ns_grpc,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     registry_service_pb2 as reg_pb2,
+)
+from agentanycast._generated.agentanycast.v1 import (  # noqa: E402
     registry_service_pb2_grpc as reg_grpc,
 )
 
@@ -186,7 +196,7 @@ class TestDockerNodes:
         All communication is encrypted via Noise_XX.
         """
         # Step 1: Get node info (peer IDs and listen addresses).
-        resp_a = self.client_a.GetNodeInfo(ns_pb2.GetNodeInfoRequest())
+        self.client_a.GetNodeInfo(ns_pb2.GetNodeInfoRequest())
         resp_b = self.client_b.GetNodeInfo(ns_pb2.GetNodeInfoRequest())
         peer_id_b = resp_b.node_info.peer_id
         addrs_b = list(resp_b.node_info.listen_addresses)

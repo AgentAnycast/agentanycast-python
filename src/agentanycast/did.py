@@ -57,7 +57,7 @@ def peer_id_to_did_key(peer_id: str) -> str:
 
     # Encode as did:key.
     mc_bytes = _ED25519_MULTICODEC_PREFIX + pubkey
-    return "did:key:z" + base58.b58encode(mc_bytes).decode("ascii")
+    return "did:key:z" + str(base58.b58encode(mc_bytes).decode("ascii"))
 
 
 def did_key_to_peer_id(did_key: str) -> str:
@@ -92,7 +92,7 @@ def did_key_to_peer_id(did_key: str) -> str:
 
     # Wrap in identity multihash: <0x00> <length> <data>
     mh = bytes([_IDENTITY_MULTIHASH_CODE, len(proto_bytes)]) + proto_bytes
-    return base58.b58encode(mh).decode("ascii")
+    return str(base58.b58encode(mh).decode("ascii"))
 
 
 def _parse_libp2p_pubkey_proto(data: bytes) -> bytes:

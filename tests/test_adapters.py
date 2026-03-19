@@ -9,7 +9,7 @@ import pytest
 
 from agentanycast.adapters._base import BaseAdapter
 from agentanycast.card import AgentCard, Skill
-from agentanycast.task import Artifact, IncomingTask, Message, Part
+from agentanycast.task import IncomingTask, Message, Part
 
 
 class DummyAdapter(BaseAdapter):

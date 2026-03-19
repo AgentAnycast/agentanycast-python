@@ -53,7 +53,8 @@ def test_agent_card_with_did_key():
         did_key="did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
     )
     d = card.to_dict()
-    assert d["agentanycast"]["did_key"] == "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+    expected_did = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+    assert d["agentanycast"]["did_key"] == expected_did
 
     restored = AgentCard.from_dict(d)
     assert restored.did_key == "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"

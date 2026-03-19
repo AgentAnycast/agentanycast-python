@@ -27,7 +27,15 @@ jobs:
       - name: Regenerate Python stubs
         run: |
           cd agentanycast-proto
-          buf generate
+          cat > buf.gen.python.yaml << 'GEN'
+          version: v2
+          plugins:
+            - remote: buf.build/protocolbuffers/python
+              out: gen/python
+            - remote: buf.build/grpc/python
+              out: gen/python
+          GEN
+          buf generate --template buf.gen.python.yaml
 
       - name: Check for differences
         run: |

@@ -13,8 +13,9 @@ if _generated_pkg not in __path__:
     __path__.append(_generated_pkg)
 del _pathlib, _generated_pkg
 
-from agentanycast.card import AgentCard, Skill
-from agentanycast.exceptions import (
+from agentanycast.card import AgentCard, Skill  # noqa: E402
+from agentanycast.did import did_key_to_peer_id, peer_id_to_did_key  # noqa: E402
+from agentanycast.exceptions import (  # noqa: E402
     AgentAnycastError,
     BridgeConnectionError,
     BridgeError,
@@ -34,19 +35,34 @@ from agentanycast.exceptions import (
     TaskRejectedError,
     TaskTimeoutError,
 )
-from agentanycast.did import did_key_to_peer_id, peer_id_to_did_key
-from agentanycast.mcp import MCPTool, mcp_tool_to_skill, mcp_tools_to_agent_card, skill_to_mcp_tool
-from agentanycast.node import Node
+from agentanycast.mcp import (  # noqa: E402
+    MCPTool,
+    mcp_tool_to_skill,
+    mcp_tools_to_agent_card,
+    skill_to_mcp_tool,
+)
+from agentanycast.node import Node  # noqa: E402
+from agentanycast.task import (  # noqa: E402
+    Artifact,
+    IncomingTask,
+    Message,
+    Part,
+    Task,
+    TaskHandle,
+    TaskStatus,
+)
+
+__version__ = "0.3.0"
+
 
 # v0.3: Lazy imports for optional compat modules (avoid hard httpx dependency at import time).
 def __getattr__(name: str):  # type: ignore[no-untyped-def]
     if name == "AGNTCYDirectory":
         from agentanycast.compat.agntcy import AGNTCYDirectory
+
         return AGNTCYDirectory
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-from agentanycast.task import Artifact, IncomingTask, Message, Part, Task, TaskHandle, TaskStatus
 
-__version__ = "0.3.0"
 
 __all__ = [
     # Core
