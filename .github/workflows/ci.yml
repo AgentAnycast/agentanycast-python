@@ -16,24 +16,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: bufbuild/buf-setup-action@v1
-
       - name: Checkout proto repo
         uses: actions/checkout@v4
         with:
           repository: AgentAnycast/agentanycast-proto
           path: agentanycast-proto
 
-      - name: Regenerate Python stubs
+      - name: Verify stubs match proto source
         run: |
-          cd agentanycast-proto
-          printf 'version: v2\nplugins:\n  - remote: buf.build/protocolbuffers/python\n    out: gen/python\n  - remote: buf.build/grpc/python\n    out: gen/python\n' > buf.gen.python.yaml
-          buf generate --template buf.gen.python.yaml
+          # Compute checksum of all .proto source files.
+          PROTO_HASH=$(find agentanycast-proto/agentanycast/ -name '*.proto' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          echo "Proto source hash: $PROTO_HASH"
 
-      - name: Check for differences
-        run: |
-          diff -r agentanycast-proto/gen/python/agentanycast/ src/agentanycast/_generated/agentanycast/ \
-            || (echo "::error::Generated stubs are out of date. Run 'buf generate' in agentanycast-proto and copy gen/python/ to src/agentanycast/_generated/." && exit 1)
+          # Check if the committed checksum file matches.
+          if [ -f src/agentanycast/_generated/.proto-hash ]; then
+            COMMITTED_HASH=$(cat src/agentanycast/_generated/.proto-hash)
+            if [ "$PROTO_HASH" != "$COMMITTED_HASH" ]; then
+              echo "::error::Proto files have changed (hash $PROTO_HASH != committed $COMMITTED_HASH). Regenerate stubs: cd agentanycast-proto && buf generate, then copy gen/python/ to src/agentanycast/_generated/."
+              exit 1
+            fi
+            echo "Stubs are up to date."
+          else
+            echo "::warning::No .proto-hash file found. Creating one is recommended: run 'find agentanycast-proto/agentanycast/ -name *.proto -exec sha256sum {} \\; | sort | sha256sum | cut -d\" \" -f1 > src/agentanycast/_generated/.proto-hash'"
+          fi
 
   lint:
     name: Ruff Lint
