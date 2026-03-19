@@ -1,0 +1,109 @@
+# AgentAnycast Python SDK
+
+> Python SDK for AgentAnycast — the decentralized P2P runtime for the A2A (Agent-to-Agent) protocol. Build P2P agents with `async/await`, framework adapters, and MCP bridging.
+
+## Documentation
+
+- [Getting Started](https://github.com/AgentAnycast/agentanycast/blob/main/docs/getting-started.md): Install and run your first P2P agent in 5 minutes
+- [Python SDK Reference](https://github.com/AgentAnycast/agentanycast/blob/main/docs/python-sdk.md): Complete API docs — Node, AgentCard, Task, IncomingTask
+- [Examples](https://github.com/AgentAnycast/agentanycast/blob/main/docs/examples.md): CrewAI, LangGraph, MCP tool mapping, streaming
+- [Architecture](https://github.com/AgentAnycast/agentanycast/blob/main/docs/architecture.md): Sidecar daemon + SDK design
+- [Protocol Reference](https://github.com/AgentAnycast/agentanycast/blob/main/docs/protocol.md): Wire format, task lifecycle, 16 gRPC RPCs
+
+## Quick Install
+
+```bash
+pip install agentanycast
+
+# With framework adapters
+pip install agentanycast[crewai]
+pip install agentanycast[langgraph]
+pip install agentanycast[adapters]  # all adapters
+
+# Development
+pip install -e ".[dev]"
+```
+
+## Key APIs
+
+### Node — main entry point
+
+```python
+from agentanycast import Node, AgentCard, Skill
+
+card = AgentCard(name="MyAgent", skills=[Skill(id="echo", description="Echo service")])
+async with Node(card=card) as node:
+    @node.on_task
+    async def handle(task):
+        user_msg = task.messages[-1].parts[0].text
+        await task.complete(artifacts=[{"parts": [{"text": f"Echo: {user_msg}"}]}])
+    await node.serve_forever()
+```
+
+### Three addressing modes for send_task
+
+```python
+# Direct — known peer
+result = await node.send_task(peer_id="12D3KooW...", message="Hello")
+
+# Anycast — skill-based routing
+result = await node.send_task(skill="translate", message="Hello")
+
+# HTTP Bridge — standard A2A endpoint
+result = await node.send_task(url="https://agent.example.com", message="Hello")
+```
+
+### Framework adapters
+
+```python
+# CrewAI
+from agentanycast.adapters.crewai import serve_crew
+await serve_crew(crew, card=card)
+
+# LangGraph
+from agentanycast.adapters.langgraph import serve_graph
+await serve_graph(graph, card=card)
+```
+
+### MCP bridging
+
+```python
+from agentanycast.mcp import mcp_tool_to_skill, skill_to_mcp_tool
+skill = mcp_tool_to_skill(mcp_tool)
+tool = skill_to_mcp_tool(skill)
+```
+
+### DID identity
+
+```python
+from agentanycast.did import peer_id_to_did_key, did_key_to_peer_id
+did = peer_id_to_did_key("12D3KooW...")
+peer_id = did_key_to_peer_id("did:key:z6Mk...")
+```
+
+### CLI
+
+```bash
+agentanycast demo              # Start echo agent
+agentanycast discover <skill>  # Find agents by skill
+agentanycast send <target> "msg"  # Send task to peer/skill/URL
+agentanycast status            # Daemon status
+agentanycast info              # Node info (PeerID, DID, addresses)
+```
+
+## Key Concepts
+
+- **Sidecar daemon**: Go binary auto-downloaded on first run; SDK communicates via gRPC over Unix socket
+- **AgentCard**: Declares agent identity, skills, and capabilities (A2A standard)
+- **IncomingTask**: Server-side task handle with `complete()`, `fail()`, `update()`, `send_artifact()`
+- **TaskHandle**: Client-side handle returned by `send_task()` with status and result access
+- **Streaming**: Chunked artifact delivery for large payloads via `send_artifact()`
+- **Offline queue**: Messages queued when peer is offline, delivered on reconnection
+
+## Related Repositories
+
+- [agentanycast](https://github.com/AgentAnycast/agentanycast): Documentation hub
+- [agentanycast-ts](https://github.com/AgentAnycast/agentanycast-ts): TypeScript SDK
+- [agentanycast-node](https://github.com/AgentAnycast/agentanycast-node): Go daemon
+- [agentanycast-relay](https://github.com/AgentAnycast/agentanycast-relay): Relay server
+- [agentanycast-proto](https://github.com/AgentAnycast/agentanycast-proto): Protobuf definitions

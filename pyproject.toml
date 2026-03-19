@@ -12,7 +12,11 @@ requires-python = ">=3.10"
 authors = [
     { name = "AgentAnycast Contributors" },
 ]
-keywords = ["a2a", "agent", "p2p", "libp2p", "grpc"]
+keywords = [
+    "a2a", "a2a-protocol", "agent", "agent-communication", "p2p", "libp2p",
+    "grpc", "mcp", "crewai", "langgraph", "zero-config", "end-to-end-encryption",
+    "nat-traversal", "decentralized", "noise-protocol", "did",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
