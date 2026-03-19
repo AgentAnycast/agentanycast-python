@@ -44,7 +44,9 @@ class LangGraphAdapter(BaseAdapter):
         self._input_key = input_key
 
     async def _invoke(
-        self, input_text: str, input_data: dict[str, Any] | None,
+        self,
+        input_text: str,
+        input_data: dict[str, Any] | None,
     ) -> str | dict[str, Any]:
         """Run the graph with the given input.
 

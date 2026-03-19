@@ -36,7 +36,9 @@ class BaseAdapter:
         )
 
     async def _invoke(
-        self, input_text: str, input_data: dict[str, Any] | None,
+        self,
+        input_text: str,
+        input_data: dict[str, Any] | None,
     ) -> str | dict[str, Any]:
         """Invoke the wrapped framework. Must be overridden by subclasses.
 

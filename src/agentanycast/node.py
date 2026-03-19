@@ -487,8 +487,7 @@ class Node:
                 "agent_name": agent.agent_name,
                 "agent_description": agent.agent_description,
                 "skills": [
-                    {"skill_id": s.skill_id, "description": s.description}
-                    for s in agent.skills
+                    {"skill_id": s.skill_id, "description": s.description} for s in agent.skills
                 ],
             }
             for agent in resp.agents

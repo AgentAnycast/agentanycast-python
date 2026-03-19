@@ -22,7 +22,9 @@ class DummyAdapter(BaseAdapter):
         self.received_data: dict[str, Any] | None = None
 
     async def _invoke(
-        self, input_text: str, input_data: dict[str, Any] | None,
+        self,
+        input_text: str,
+        input_data: dict[str, Any] | None,
     ) -> str | dict[str, Any]:
         self.received_text = input_text
         self.received_data = input_data
@@ -33,7 +35,9 @@ class FailingAdapter(BaseAdapter):
     """Adapter that raises during invocation."""
 
     async def _invoke(
-        self, input_text: str, input_data: dict[str, Any] | None,
+        self,
+        input_text: str,
+        input_data: dict[str, Any] | None,
     ) -> str | dict[str, Any]:
         raise ValueError("Framework error")
 
@@ -72,7 +76,10 @@ def test_base_adapter_init(mock_node_cls: MagicMock) -> None:
     adapter = DummyAdapter(card=card, relay="/ip4/1.2.3.4/tcp/9000")
     assert adapter._card == card
     mock_node_cls.assert_called_once_with(
-        card=card, relay="/ip4/1.2.3.4/tcp/9000", key_path=None, home=None,
+        card=card,
+        relay="/ip4/1.2.3.4/tcp/9000",
+        key_path=None,
+        home=None,
     )
 
 
@@ -138,4 +145,5 @@ def test_base_adapter_invoke_not_implemented() -> None:
             await adapter._invoke("test", None)
 
     import asyncio
+
     asyncio.run(run())

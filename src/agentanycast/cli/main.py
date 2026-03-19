@@ -85,7 +85,10 @@ def discover(skill: str, tag: tuple[str, ...], relay: str | None, home: str | No
 
 
 async def _discover(
-    skill: str, tags: dict[str, str] | None, relay: str | None, home: str | None,
+    skill: str,
+    tags: dict[str, str] | None,
+    relay: str | None,
+    home: str | None,
 ) -> None:
     from agentanycast import AgentCard, Node
 

@@ -74,33 +74,37 @@ class TestEndToEnd:
         assert peer_id_b, "receiver should have a peer ID"
 
         # Connect sender to receiver.
-        client_a.ConnectPeer(ns_pb2.ConnectPeerRequest(
-            peer_id=peer_id_b,
-            addresses=addrs_b,
-        ))
+        client_a.ConnectPeer(
+            ns_pb2.ConnectPeerRequest(
+                peer_id=peer_id_b,
+                addresses=addrs_b,
+            )
+        )
 
         # Set agent cards.
-        client_a.SetAgentCard(ns_pb2.SetAgentCardRequest(
-            card=card_pb2.AgentCard(
-                name="Sender Agent",
-                skills=[card_pb2.Skill(id="send", description="Sends tasks")],
-            ),
-        ))
-        client_b.SetAgentCard(ns_pb2.SetAgentCardRequest(
-            card=card_pb2.AgentCard(
-                name="Receiver Agent",
-                skills=[card_pb2.Skill(id="echo", description="Echoes input")],
-            ),
-        ))
+        client_a.SetAgentCard(
+            ns_pb2.SetAgentCardRequest(
+                card=card_pb2.AgentCard(
+                    name="Sender Agent",
+                    skills=[card_pb2.Skill(id="send", description="Sends tasks")],
+                ),
+            )
+        )
+        client_b.SetAgentCard(
+            ns_pb2.SetAgentCardRequest(
+                card=card_pb2.AgentCard(
+                    name="Receiver Agent",
+                    skills=[card_pb2.Skill(id="echo", description="Echoes input")],
+                ),
+            )
+        )
 
         # Subscribe to incoming tasks on receiver (background thread).
         incoming: queue.Queue[ns_pb2.SubscribeIncomingTasksResponse] = queue.Queue()
 
         def _subscribe() -> None:
             try:
-                stream = client_b.SubscribeIncomingTasks(
-                    ns_pb2.SubscribeIncomingTasksRequest()
-                )
+                stream = client_b.SubscribeIncomingTasks(ns_pb2.SubscribeIncomingTasksRequest())
                 for resp in stream:
                     incoming.put(resp)
             except grpc.RpcError:
@@ -111,15 +115,19 @@ class TestEndToEnd:
         time.sleep(0.5)  # Let subscription establish.
 
         # Send task from A → B.
-        send_resp = client_a.SendTask(ns_pb2.SendTaskRequest(
-            peer_id=peer_id_b,
-            message=a2a_pb2.Message(
-                role=a2a_pb2.MESSAGE_ROLE_USER,
-                parts=[a2a_pb2.Part(
-                    text_part=a2a_pb2.TextPart(text="hello via Noise"),
-                )],
-            ),
-        ))
+        send_resp = client_a.SendTask(
+            ns_pb2.SendTaskRequest(
+                peer_id=peer_id_b,
+                message=a2a_pb2.Message(
+                    role=a2a_pb2.MESSAGE_ROLE_USER,
+                    parts=[
+                        a2a_pb2.Part(
+                            text_part=a2a_pb2.TextPart(text="hello via Noise"),
+                        )
+                    ],
+                ),
+            )
+        )
         task_id = send_resp.task.task_id
         assert task_id, "SendTask should return a task ID"
 
@@ -132,20 +140,28 @@ class TestEndToEnd:
         assert received.task.task_id, "incoming task should have an ID"
 
         # Transition to WORKING, then complete.
-        client_b.UpdateTaskStatus(ns_pb2.UpdateTaskStatusRequest(
-            task_id=received.task.task_id,
-            status=a2a_pb2.TASK_STATUS_WORKING,
-        ))
-        client_b.CompleteTask(ns_pb2.CompleteTaskRequest(
-            task_id=received.task.task_id,
-            artifacts=[a2a_pb2.Artifact(
-                artifact_id="art-1",
-                name="echo-result",
-                parts=[a2a_pb2.Part(
-                    text_part=a2a_pb2.TextPart(text="echo: hello via Noise"),
-                )],
-            )],
-        ))
+        client_b.UpdateTaskStatus(
+            ns_pb2.UpdateTaskStatusRequest(
+                task_id=received.task.task_id,
+                status=a2a_pb2.TASK_STATUS_WORKING,
+            )
+        )
+        client_b.CompleteTask(
+            ns_pb2.CompleteTaskRequest(
+                task_id=received.task.task_id,
+                artifacts=[
+                    a2a_pb2.Artifact(
+                        artifact_id="art-1",
+                        name="echo-result",
+                        parts=[
+                            a2a_pb2.Part(
+                                text_part=a2a_pb2.TextPart(text="echo: hello via Noise"),
+                            )
+                        ],
+                    )
+                ],
+            )
+        )
 
         # Poll GetTask on sender until completed.
         for _ in range(30):
@@ -154,9 +170,6 @@ class TestEndToEnd:
                 break
             time.sleep(0.5)
         else:
-            pytest.fail(
-                f"Task did not complete within 15s. "
-                f"Final status: {resp.task.status}"
-            )
+            pytest.fail(f"Task did not complete within 15s. Final status: {resp.task.status}")
 
         assert resp.task.status == a2a_pb2.TASK_STATUS_COMPLETED

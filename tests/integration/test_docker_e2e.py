@@ -65,19 +65,25 @@ class TestDockerRegistry:
 
     def test_register_and_discover(self) -> None:
         """Register a skill and discover it through the relay."""
-        self.client.RegisterSkills(reg_pb2.RegisterSkillsRequest(
-            peer_id="12D3KooWDockerTestA",
-            skills=[reg_pb2.SkillInfo(
-                skill_id="docker-echo",
-                description="Echo from Docker",
-            )],
-            agent_name="Docker Echo Agent",
-            agent_description="A test agent in Docker",
-        ))
+        self.client.RegisterSkills(
+            reg_pb2.RegisterSkillsRequest(
+                peer_id="12D3KooWDockerTestA",
+                skills=[
+                    reg_pb2.SkillInfo(
+                        skill_id="docker-echo",
+                        description="Echo from Docker",
+                    )
+                ],
+                agent_name="Docker Echo Agent",
+                agent_description="A test agent in Docker",
+            )
+        )
 
-        resp = self.client.DiscoverBySkill(reg_pb2.DiscoverBySkillRequest(
-            skill_id="docker-echo",
-        ))
+        resp = self.client.DiscoverBySkill(
+            reg_pb2.DiscoverBySkillRequest(
+                skill_id="docker-echo",
+            )
+        )
         assert len(resp.agents) >= 1
 
         found = False
@@ -89,70 +95,92 @@ class TestDockerRegistry:
 
     def test_heartbeat_known_peer(self) -> None:
         """Heartbeat for a registered peer should return an expiry time."""
-        self.client.RegisterSkills(reg_pb2.RegisterSkillsRequest(
-            peer_id="12D3KooWDockerHB",
-            skills=[reg_pb2.SkillInfo(skill_id="docker-hb")],
-            agent_name="HB Agent",
-        ))
+        self.client.RegisterSkills(
+            reg_pb2.RegisterSkillsRequest(
+                peer_id="12D3KooWDockerHB",
+                skills=[reg_pb2.SkillInfo(skill_id="docker-hb")],
+                agent_name="HB Agent",
+            )
+        )
 
-        resp = self.client.Heartbeat(reg_pb2.HeartbeatRequest(
-            peer_id="12D3KooWDockerHB",
-        ))
+        resp = self.client.Heartbeat(
+            reg_pb2.HeartbeatRequest(
+                peer_id="12D3KooWDockerHB",
+            )
+        )
         assert resp.expires_at is not None
 
     def test_heartbeat_unknown_peer_fails(self) -> None:
         """Heartbeat for an unknown peer should return NOT_FOUND."""
         with pytest.raises(grpc.RpcError) as exc_info:
-            self.client.Heartbeat(reg_pb2.HeartbeatRequest(
-                peer_id="12D3KooWNonExistent",
-            ))
+            self.client.Heartbeat(
+                reg_pb2.HeartbeatRequest(
+                    peer_id="12D3KooWNonExistent",
+                )
+            )
         assert exc_info.value.code() == grpc.StatusCode.NOT_FOUND
 
     def test_unregister_skills(self) -> None:
         """Unregistering a skill should remove it from discovery."""
-        self.client.RegisterSkills(reg_pb2.RegisterSkillsRequest(
-            peer_id="12D3KooWDockerUnreg",
-            skills=[
-                reg_pb2.SkillInfo(skill_id="docker-unreg-a"),
-                reg_pb2.SkillInfo(skill_id="docker-unreg-b"),
-            ],
-            agent_name="Unreg Agent",
-        ))
+        self.client.RegisterSkills(
+            reg_pb2.RegisterSkillsRequest(
+                peer_id="12D3KooWDockerUnreg",
+                skills=[
+                    reg_pb2.SkillInfo(skill_id="docker-unreg-a"),
+                    reg_pb2.SkillInfo(skill_id="docker-unreg-b"),
+                ],
+                agent_name="Unreg Agent",
+            )
+        )
 
-        self.client.UnregisterSkills(reg_pb2.UnregisterSkillsRequest(
-            peer_id="12D3KooWDockerUnreg",
-            skill_ids=["docker-unreg-a"],
-        ))
+        self.client.UnregisterSkills(
+            reg_pb2.UnregisterSkillsRequest(
+                peer_id="12D3KooWDockerUnreg",
+                skill_ids=["docker-unreg-a"],
+            )
+        )
 
-        resp = self.client.DiscoverBySkill(reg_pb2.DiscoverBySkillRequest(
-            skill_id="docker-unreg-a",
-        ))
+        resp = self.client.DiscoverBySkill(
+            reg_pb2.DiscoverBySkillRequest(
+                skill_id="docker-unreg-a",
+            )
+        )
         for agent in resp.agents:
             assert agent.peer_id != "12D3KooWDockerUnreg"
 
     def test_tag_filtering(self) -> None:
         """Tag-based filtering should work in Docker."""
-        self.client.RegisterSkills(reg_pb2.RegisterSkillsRequest(
-            peer_id="12D3KooWDockerTagEN",
-            skills=[reg_pb2.SkillInfo(
-                skill_id="docker-translate",
-                tags={"lang": "en"},
-            )],
-            agent_name="EN Translator",
-        ))
-        self.client.RegisterSkills(reg_pb2.RegisterSkillsRequest(
-            peer_id="12D3KooWDockerTagZH",
-            skills=[reg_pb2.SkillInfo(
+        self.client.RegisterSkills(
+            reg_pb2.RegisterSkillsRequest(
+                peer_id="12D3KooWDockerTagEN",
+                skills=[
+                    reg_pb2.SkillInfo(
+                        skill_id="docker-translate",
+                        tags={"lang": "en"},
+                    )
+                ],
+                agent_name="EN Translator",
+            )
+        )
+        self.client.RegisterSkills(
+            reg_pb2.RegisterSkillsRequest(
+                peer_id="12D3KooWDockerTagZH",
+                skills=[
+                    reg_pb2.SkillInfo(
+                        skill_id="docker-translate",
+                        tags={"lang": "zh"},
+                    )
+                ],
+                agent_name="ZH Translator",
+            )
+        )
+
+        resp = self.client.DiscoverBySkill(
+            reg_pb2.DiscoverBySkillRequest(
                 skill_id="docker-translate",
                 tags={"lang": "zh"},
-            )],
-            agent_name="ZH Translator",
-        ))
-
-        resp = self.client.DiscoverBySkill(reg_pb2.DiscoverBySkillRequest(
-            skill_id="docker-translate",
-            tags={"lang": "zh"},
-        ))
+            )
+        )
         peer_ids = [a.peer_id for a in resp.agents]
         assert "12D3KooWDockerTagZH" in peer_ids
         assert "12D3KooWDockerTagEN" not in peer_ids
@@ -202,24 +230,30 @@ class TestDockerNodes:
         addrs_b = list(resp_b.node_info.listen_addresses)
 
         # Step 2: Connect node A to node B using container-internal addresses.
-        self.client_a.ConnectPeer(ns_pb2.ConnectPeerRequest(
-            peer_id=peer_id_b,
-            addresses=addrs_b,
-        ))
+        self.client_a.ConnectPeer(
+            ns_pb2.ConnectPeerRequest(
+                peer_id=peer_id_b,
+                addresses=addrs_b,
+            )
+        )
 
         # Step 3: Set agent cards on both nodes.
-        self.client_a.SetAgentCard(ns_pb2.SetAgentCardRequest(
-            card=card_pb2.AgentCard(
-                name="Docker Agent A",
-                skills=[card_pb2.Skill(id="send", description="Sends tasks")],
-            ),
-        ))
-        self.client_b.SetAgentCard(ns_pb2.SetAgentCardRequest(
-            card=card_pb2.AgentCard(
-                name="Docker Agent B",
-                skills=[card_pb2.Skill(id="echo", description="Echoes input")],
-            ),
-        ))
+        self.client_a.SetAgentCard(
+            ns_pb2.SetAgentCardRequest(
+                card=card_pb2.AgentCard(
+                    name="Docker Agent A",
+                    skills=[card_pb2.Skill(id="send", description="Sends tasks")],
+                ),
+            )
+        )
+        self.client_b.SetAgentCard(
+            ns_pb2.SetAgentCardRequest(
+                card=card_pb2.AgentCard(
+                    name="Docker Agent B",
+                    skills=[card_pb2.Skill(id="echo", description="Echoes input")],
+                ),
+            )
+        )
 
         # Step 4: Subscribe to incoming tasks on node B.
         incoming: queue.Queue[ns_pb2.SubscribeIncomingTasksResponse] = queue.Queue()
@@ -239,15 +273,19 @@ class TestDockerNodes:
         time.sleep(0.5)
 
         # Step 5: Send task from A → B.
-        send_resp = self.client_a.SendTask(ns_pb2.SendTaskRequest(
-            peer_id=peer_id_b,
-            message=a2a_pb2.Message(
-                role=a2a_pb2.MESSAGE_ROLE_USER,
-                parts=[a2a_pb2.Part(
-                    text_part=a2a_pb2.TextPart(text="hello from docker e2e"),
-                )],
-            ),
-        ))
+        send_resp = self.client_a.SendTask(
+            ns_pb2.SendTaskRequest(
+                peer_id=peer_id_b,
+                message=a2a_pb2.Message(
+                    role=a2a_pb2.MESSAGE_ROLE_USER,
+                    parts=[
+                        a2a_pb2.Part(
+                            text_part=a2a_pb2.TextPart(text="hello from docker e2e"),
+                        )
+                    ],
+                ),
+            )
+        )
         task_id = send_resp.task.task_id
         assert task_id, "SendTask should return a task ID"
 
@@ -260,36 +298,39 @@ class TestDockerNodes:
         assert received.task.task_id, "incoming task should have a task ID"
 
         # Step 7: Transition to WORKING, then complete.
-        self.client_b.UpdateTaskStatus(ns_pb2.UpdateTaskStatusRequest(
-            task_id=received.task.task_id,
-            status=a2a_pb2.TASK_STATUS_WORKING,
-        ))
-        self.client_b.CompleteTask(ns_pb2.CompleteTaskRequest(
-            task_id=received.task.task_id,
-            artifacts=[a2a_pb2.Artifact(
-                artifact_id="docker-art-1",
-                name="docker-echo",
-                parts=[a2a_pb2.Part(
-                    text_part=a2a_pb2.TextPart(
-                        text="echo: hello from docker e2e",
-                    ),
-                )],
-            )],
-        ))
+        self.client_b.UpdateTaskStatus(
+            ns_pb2.UpdateTaskStatusRequest(
+                task_id=received.task.task_id,
+                status=a2a_pb2.TASK_STATUS_WORKING,
+            )
+        )
+        self.client_b.CompleteTask(
+            ns_pb2.CompleteTaskRequest(
+                task_id=received.task.task_id,
+                artifacts=[
+                    a2a_pb2.Artifact(
+                        artifact_id="docker-art-1",
+                        name="docker-echo",
+                        parts=[
+                            a2a_pb2.Part(
+                                text_part=a2a_pb2.TextPart(
+                                    text="echo: hello from docker e2e",
+                                ),
+                            )
+                        ],
+                    )
+                ],
+            )
+        )
 
         # Step 8: Poll GetTask on node A until completed.
         for _ in range(30):
-            resp = self.client_a.GetTask(
-                ns_pb2.GetTaskRequest(task_id=task_id)
-            )
+            resp = self.client_a.GetTask(ns_pb2.GetTaskRequest(task_id=task_id))
             if resp.task.status == a2a_pb2.TASK_STATUS_COMPLETED:
                 break
             time.sleep(0.5)
         else:
-            pytest.fail(
-                f"Task did not complete within 15s. "
-                f"Final status: {resp.task.status}"
-            )
+            pytest.fail(f"Task did not complete within 15s. Final status: {resp.task.status}")
 
         # Step 9: Assert completion.
         assert resp.task.status == a2a_pb2.TASK_STATUS_COMPLETED

@@ -103,7 +103,8 @@ def node_binary() -> str:
 
 @pytest.fixture(scope="session")
 def relay_process(
-    relay_binary: str, tmp_path_factory: pytest.TempPathFactory,
+    relay_binary: str,
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> Generator[dict[str, str], None, None]:
     """Start a real relay process for the test session.
 
@@ -121,11 +122,16 @@ def relay_process(
 
     cmd = [
         relay_binary,
-        "--listen", f"/ip4/127.0.0.1/tcp/{p2p_port}",
-        "--registry-listen", f"127.0.0.1:{registry_port}",
-        "--registry-ttl", "30s",
-        "--log-level", "error",
-        "--key", key_path,
+        "--listen",
+        f"/ip4/127.0.0.1/tcp/{p2p_port}",
+        "--registry-listen",
+        f"127.0.0.1:{registry_port}",
+        "--registry-ttl",
+        "30s",
+        "--log-level",
+        "error",
+        "--key",
+        key_path,
     ]
 
     proc = subprocess.Popen(
@@ -196,10 +202,14 @@ def daemon_factory(
 
         cmd = [
             node_binary,
-            "--grpc-listen", grpc_addr,
-            "--key", str(home / "key"),
-            "--log-level", "error",
-            "--bootstrap-peers", bootstrap,
+            "--grpc-listen",
+            grpc_addr,
+            "--key",
+            str(home / "key"),
+            "--log-level",
+            "error",
+            "--bootstrap-peers",
+            bootstrap,
         ]
 
         # Set config via env to avoid needing a config file.

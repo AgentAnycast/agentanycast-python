@@ -27,14 +27,7 @@ jobs:
       - name: Regenerate Python stubs
         run: |
           cd agentanycast-proto
-          cat > buf.gen.python.yaml << 'GEN'
-          version: v2
-          plugins:
-            - remote: buf.build/protocolbuffers/python
-              out: gen/python
-            - remote: buf.build/grpc/python
-              out: gen/python
-          GEN
+          printf 'version: v2\nplugins:\n  - remote: buf.build/protocolbuffers/python\n    out: gen/python\n  - remote: buf.build/grpc/python\n    out: gen/python\n' > buf.gen.python.yaml
           buf generate --template buf.gen.python.yaml
 
       - name: Check for differences
@@ -75,7 +68,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Mypy
-        run: mypy src/ --ignore-missing-imports
+        run: mypy src/ --exclude '_generated'
 
   test:
     name: Test (Python ${{ matrix.python-version }})

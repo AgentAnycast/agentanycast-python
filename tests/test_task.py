@@ -202,9 +202,7 @@ async def test_incoming_task_request_input_with_multiple_parts():
 
     incoming = IncomingTask(task=task, sender_card=None, update_fn=update_fn)
 
-    msg = Message(
-        role="agent", parts=[Part(text="Please provide"), Part(text="your email")]
-    )
+    msg = Message(role="agent", parts=[Part(text="Please provide"), Part(text="your email")])
     await incoming.request_input(msg)
 
     assert len(captured) == 1
